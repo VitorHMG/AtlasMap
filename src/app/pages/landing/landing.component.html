@@ -1,0 +1,128 @@
+<div class="landing-page">
+  <header class="landing-header">
+    <a class="landing-logo" href="#inicio">AtlasMap</a>
+    <button class="menu-toggle" type="button" aria-label="Abrir menu" (click)="menuOpen.set(!menuOpen())">☰</button>
+    <nav [class.open]="menuOpen()">
+      <a href="#sobre">Sobre</a>
+      <a href="#pitch">Pitch</a>
+      <a href="#demonstracao">Demonstração</a>
+      <a href="#equipe">Equipe</a>
+      <a class="nav-cta" routerLink="/projetos">Acessar protótipo</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="inicio">
+      <div class="hero-copy reveal">
+        <span class="section-label">Projetos sustentáveis em movimento</span>
+        <h1>Mapeando a inovação para um futuro sustentável.</h1>
+        <p>O AtlasMap conecta projetos acadêmicos, pessoas e instituições em uma plataforma geográfica feita para dar visibilidade a boas ideias.</p>
+        <div class="hero-actions">
+          <a class="primary-button" routerLink="/projetos">Explorar projetos</a>
+          <a class="secondary-button" href="#pitch">Assistir ao pitch</a>
+        </div>
+      </div>
+      <div class="hero-image reveal">
+        <img src="assets/landing/print-inicial.png" alt="Página inicial do protótipo AtlasMap" />
+      </div>
+    </section>
+
+    <section class="repository-band reveal">
+      <div>
+        <span class="section-label">GitHub</span>
+        <h2>Repositório do projeto</h2>
+        <p>Acesse o código-fonte, acompanhe a organização do projeto e contribua com sua evolução.</p>
+      </div>
+      <a class="primary-button" href="https://github.com/VitorHMG/Landing-Page" target="_blank" rel="noreferrer">Abrir repositório</a>
+    </section>
+
+    <section class="pitch-section reveal" id="pitch">
+      <div class="section-heading compact">
+        <span class="section-label">Pitch</span>
+        <h2>Conheça a proposta do AtlasMap</h2>
+        <p>Problema, público impactado e demonstração da solução em uma apresentação direta.</p>
+      </div>
+      <div class="video-frame">
+        <iframe
+          src="https://www.youtube.com/embed/2iquKxMkwVk?si=oGuWM-GtYoLeJBYc"
+          title="Pitch do AtlasMap"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </section>
+
+    <section class="feature-strip reveal" aria-label="Recursos">
+      <article><strong>Mapa</strong><span>Projetos organizados geograficamente</span></article>
+      <article><strong>Perfil</strong><span>Projetos próprios e curtidos</span></article>
+      <article><strong>Auth</strong><span>Fluxo simulado de login e cadastro</span></article>
+      <article><strong>Web</strong><span>Interface responsiva para apresentação</span></article>
+    </section>
+
+    <section class="content-section split-section" id="sobre">
+      <div class="section-heading reveal">
+        <span class="section-label">O problema</span>
+        <h2>Boas iniciativas não deveriam desaparecer ao fim do semestre.</h2>
+      </div>
+      <div class="content-copy reveal">
+        <p>Muitos projetos acadêmicos sustentáveis perdem visibilidade e continuidade por falta de um espaço centralizado para divulgação e conexão.</p>
+        <p>O AtlasMap transforma esses projetos em pontos vivos no mapa, facilitando a descoberta por estudantes, instituições e potenciais parceiros.</p>
+      </div>
+    </section>
+
+    <section class="solution-section">
+      <div class="section-heading reveal">
+        <span class="section-label">A solução</span>
+        <h2>Uma plataforma simples para publicar, explorar e acompanhar impacto.</h2>
+      </div>
+      <div class="solution-grid">
+        <article class="reveal"><span>01</span><h3>Descoberta geográfica</h3><p>Visualize iniciativas por localização e encontre projetos próximos.</p></article>
+        <article class="reveal"><span>02</span><h3>Perfis e favoritos</h3><p>Organize projetos criados e mantenha uma seleção dos seus favoritos.</p></article>
+        <article class="reveal"><span>03</span><h3>Continuidade</h3><p>Dê visibilidade ao trabalho acadêmico além da sala de aula.</p></article>
+      </div>
+    </section>
+
+    <section class="demo-section" id="demonstracao">
+      <div class="section-heading centered reveal">
+        <span class="section-label">Demonstração</span>
+        <h2>Demonstração das funcionalidades</h2>
+        <p>Veja os principais fluxos do protótipo em funcionamento: autenticação, cards, likes, perfil e mapa.</p>
+        <div class="hero-actions centered-actions">
+          <a class="primary-button" routerLink="/login">Testar login</a>
+          <a class="secondary-button" routerLink="/mapa">Abrir mapa</a>
+        </div>
+      </div>
+      <div class="demo-grid">
+        <article class="demo-card reveal"><div><h3>Login</h3><p>Preenchimento das credenciais e entrada no protótipo.</p></div><img src="assets/landing/gifs/login.gif" alt="Demonstração do login" loading="lazy" /></article>
+        <article class="demo-card reveal"><div><h3>Expansão dos cards</h3><p>Detalhes de cada projeto aparecem sem sair da página.</p></div><img src="assets/landing/gifs/cards-exp.gif" alt="Cards de projetos sendo expandidos" loading="lazy" /></article>
+        <article class="demo-card reveal"><div><h3>Curtir projetos</h3><p>O coração permite favoritar cada iniciativa de forma independente.</p></div><img src="assets/landing/gifs/likes.gif" alt="Projetos sendo curtidos" loading="lazy" /></article>
+        <article class="demo-card reveal"><div><h3>Favoritos no perfil</h3><p>A lista acompanha em tempo real os projetos curtidos e removidos.</p></div><img src="assets/landing/gifs/likes2.gif" alt="Projetos curtidos no perfil" loading="lazy" /></article>
+        <article class="demo-card wide reveal"><div><h3>Mapa interativo</h3><p>Explore os pontos cadastrados e navegue pelo território.</p></div><img src="assets/landing/gifs/demo-mapa.gif" alt="Navegação pelo mapa AtlasMap" loading="lazy" /></article>
+      </div>
+    </section>
+
+    <section class="ods-section reveal">
+      <div><span class="section-label">Impacto</span><h2>Alinhado aos Objetivos de Desenvolvimento Sustentável</h2></div>
+      <div class="ods-list"><span>ODS 9</span><span>ODS 11</span><span>ODS 12</span><span>ODS 17</span></div>
+    </section>
+
+    <section class="team-section" id="equipe">
+      <div class="section-heading centered reveal"><span class="section-label">Equipe</span><h2>Quem construiu o AtlasMap</h2></div>
+      <div class="team-grid">
+        <article class="team-card reveal"><img class="avatar" src="assets/landing/team/erick.png" alt="Erick Lucas Oliveira" /><h3>Erick Lucas Oliveira</h3><p>Desenvolvimento e integração.</p></article>
+        <article class="team-card reveal"><img class="avatar" src="assets/landing/team/giovanni.png" alt="Giovanni Lati" /><h3>Giovanni Lati</h3><p>Pesquisa e experiência do usuário.</p></article>
+        <article class="team-card reveal"><img class="avatar" src="assets/landing/team/matheus.png" alt="Matheus Carvalho" /><h3>Matheus Carvalho</h3><p>Documentação e validação.</p></article>
+        <article class="team-card reveal"><img class="avatar" src="assets/landing/team/rodrigo.png" alt="Rodrigo Seishi Suzuki" /><h3>Rodrigo Seishi Suzuki</h3><p>Arquitetura e apresentação.</p></article>
+        <article class="team-card reveal"><img class="avatar" src="assets/landing/team/vitor.png" alt="Vitor Hugo Magalhães" /><h3>Vitor Hugo Magalhães</h3><p>Integração geográfica e visualização.</p></article>
+      </div>
+    </section>
+
+    <section class="qr-section reveal">
+      <div><span class="section-label">Experimente</span><h2>Leve o AtlasMap com você</h2><p>A interface se reorganiza entre telas grandes e celulares sem perder os fluxos principais.</p></div>
+      <img [src]="qrUrl" alt="QR code para esta página" />
+    </section>
+  </main>
+
+  <footer><strong>AtlasMap</strong><span>Mapeando a inovação para um futuro sustentável.</span></footer>
+</div>

@@ -1,0 +1,57 @@
+<div class="app-shell">
+  <app-header (openProfile)="profileOpen.set(true)" (addProject)="openCreate()" />
+  <main class="projects-main">
+    <div class="projects-heading">
+      <div><p class="eyebrow">Iniciativas sustentáveis</p><h1>Explore os projetos</h1></div>
+      <p>Selecione um card para ver mais detalhes ou use o coração para salvar um favorito.</p>
+    </div>
+    <section class="projects-grid" aria-label="Projetos">
+      @for (project of store.projects(); track project.id) {
+        <article
+          class="project-card"
+          [class.expanded]="expandedId() === project.id"
+          (click)="toggleCard(project.id)"
+        >
+          <div class="project-image-wrap">
+            <img [src]="project.image" [alt]="project.name" />
+            <button
+              class="like-button"
+              [class.liked]="store.isLiked(project.id)"
+              type="button"
+              [attr.aria-label]="store.isLiked(project.id) ? 'Remover dos favoritos' : 'Curtir projeto'"
+              (click)="$event.stopPropagation(); store.toggleLike(project.id)"
+            >♥</button>
+          </div>
+          <div class="project-content">
+            <small>{{ project.owner }}</small>
+            <h2>{{ project.name }}</h2>
+            <p>{{ project.description }}</p>
+            @if (expandedId() === project.id) {
+              <div class="project-details">
+                <span>Localização</span>
+                <strong>{{ project.coordinates[1] }}, {{ project.coordinates[0] }}</strong>
+                @if (project.userCreated) {
+                  <button type="button" (click)="$event.stopPropagation(); openEdit(project)">Editar projeto</button>
+                }
+              </div>
+            }
+          </div>
+        </article>
+      }
+    </section>
+  </main>
+
+  <app-profile-drawer
+    [open]="profileOpen()"
+    (close)="profileOpen.set(false)"
+    (add)="openCreate()"
+    (edit)="openEdit($event)"
+  />
+  @if (formOpen()) {
+    <app-project-form
+      [project]="editingProject()"
+      (cancel)="formOpen.set(false)"
+      (saved)="formOpen.set(false)"
+    />
+  }
+</div>

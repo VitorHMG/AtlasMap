@@ -1,0 +1,695 @@
+<div class="app-shell community-shell">
+  <app-header (addProject)="editingProject.set(null); formOpen.set(true)" />
+  <main class="community-main">
+    <div class="workspace-label">
+      <span class="live-dot"></span> CONECTANDO PESSOAS, PROJETOS E IMPACTO
+      <span>Comunidade AtlasMap</span>
+    </div>
+    @if (page === 'discover') {
+      <section class="community-heading">
+        <div>
+          <p class="eyebrow">Explore possibilidades</p>
+          <h1>Grandes ideias.<br /><span>Impacto de verdade.</span></h1>
+          <p>Descubra projetos, encontre seu squad e faça parte da transformação.</p>
+        </div>
+        <a routerLink="/mapa" class="secondary-button">Explorar no mapa ↗</a>
+      </section>
+      <div class="discovery-layout">
+        <aside class="filter-panel panel">
+          <div class="panel-title">
+            <h2>Filtrar projetos</h2>
+            <button class="text-button" (click)="reset()">Limpar</button>
+          </div>
+          <label
+            >Buscar<input
+              placeholder="Nome, descrição ou squad"
+              [ngModel]="search()"
+              (ngModelChange)="search.set($event)" /></label
+          ><label
+            >Área ou tecnologia<select [ngModel]="tag()" (ngModelChange)="tag.set($event)">
+              <option value="">Todas as tags</option>
+              @for (item of tags(); track item) {
+                <option>{{ item }}</option>
+              }
+            </select></label
+          ><label
+            >Desenvolvimento<select [ngModel]="status()" (ngModelChange)="status.set($event)">
+              <option value="">Todos os status</option>
+              <option>Em pesquisa</option>
+              <option>Em desenvolvimento</option>
+              <option>Em operação</option>
+            </select></label
+          ><label
+            >Localização<select [ngModel]="city()" (ngModelChange)="city.set($event)">
+              <option value="">Todas as cidades</option>
+              @for (item of cities(); track item) {
+                <option>{{ item }}</option>
+              }
+            </select></label
+          >
+          <div class="filter-note">
+            Ideias locais.<br />Transformações globais.<span
+              >Explore iniciativas que unem tecnologia e sustentabilidade.</span
+            >
+          </div>
+        </aside>
+        <section>
+          <div class="results-heading">
+            <h2>
+              Projetos para descobrir <small>{{ filteredProjects().length }}</small>
+            </h2>
+            <span>Uma comunidade de possibilidades</span>
+          </div>
+          <div class="discovery-grid">
+            @for (p of filteredProjects(); track p.id) {
+              <article class="discovery-card">
+                <a [routerLink]="['/projeto', p.id]" class="card-photo"
+                  ><img [src]="p.image" [alt]="p.name" /><span class="status-pill">{{
+                    p.status
+                  }}</span></a
+                >
+                <div class="card-body">
+                  <a [routerLink]="['/squad', p.squadId]" class="squad-caption">{{
+                    store.squad(p.squadId)?.name || p.owner
+                  }}</a
+                  ><a [routerLink]="['/projeto', p.id]"
+                    ><h2>{{ p.name }}</h2></a
+                  >
+                  <p>{{ p.description }}</p>
+                  <div class="tag-list">
+                    @for (t of p.tags; track t) {
+                      <button (click)="tag.set(t)">{{ t }}</button>
+                    }
+                  </div>
+                  <div class="card-footer">
+                    <span>⌖ {{ p.city }}</span
+                    ><button
+                      class="save-button"
+                      [class.saved]="store.atlas.isLiked(p.id)"
+                      (click)="store.atlas.toggleLike(p.id)"
+                      [attr.aria-label]="
+                        store.atlas.isLiked(p.id) ? 'Remover dos salvos' : 'Salvar projeto'
+                      "
+                    >
+                      {{ store.atlas.isLiked(p.id) ? '♥' : '♡' }}
+                    </button>
+                  </div>
+                </div>
+              </article>
+            } @empty {
+              <div class="panel empty-state">
+                Nenhum projeto corresponde aos filtros.
+                <button class="text-button" (click)="reset()">Limpar filtros</button>
+              </div>
+            }
+          </div>
+        </section>
+      </div>
+    }
+    @if (page === 'squad') {
+      @if (squad(); as s) {
+        <section
+          class="entity-cover"
+          [style.background-image]="
+            'linear-gradient(90deg, rgba(9,34,25,.95), rgba(9,34,25,.35)), url(' + s.image + ')'
+          "
+        >
+          <p class="eyebrow">Pessoas que transformam</p>
+          <h1>{{ s.name }}</h1>
+          <p>{{ s.description }}</p>
+          <span>⌖ {{ s.city }} · {{ s.members.length }} membros · Desde 2024</span>
+        </section>
+        <div class="entity-layout">
+          <aside>
+            <section class="panel">
+              <h2>Sobre o squad</h2>
+              <p>{{ s.description }}</p>
+              <div class="tag-list">
+                @for (t of s.areas; track t) {
+                  <span>{{ t }}</span>
+                }
+              </div>
+              @if (store.atlas.user()) {
+                <button class="primary-button full-button" (click)="store.join(s.id)">
+                  {{ store.memberships().includes(s.id) ? 'Sair do squad' : 'Participar do squad' }}
+                </button>
+              } @else {
+                <a routerLink="/login" class="primary-button full-button">Entrar para participar</a>
+              }
+              <a routerLink="/chat" class="secondary-button full-button">Conversar com o squad</a>
+            </section>
+            <section class="panel">
+              <h2>Membros</h2>
+              @for (member of s.members; track member) {
+                <div class="member-row">
+                  <span class="round-avatar">{{ member.slice(0, 1) }}</span>
+                  <div>
+                    <strong>{{ member }}</strong
+                    ><small>Membro do squad</small>
+                  </div>
+                </div>
+              }
+              @if (store.memberships().includes(s.id) && store.atlas.user(); as user) {
+                <div class="member-row">
+                  <span class="round-avatar">{{ user.name.slice(0, 1) }}</span
+                  ><strong>{{ user.name }} (você)</strong>
+                </div>
+              }
+            </section>
+            <section class="panel">
+              <h2>Redes e contato</h2>
+              <p>O squad ainda não cadastrou suas redes sociais.</p>
+              <a routerLink="/chat" class="text-button">Abrir conversa →</a>
+            </section>
+          </aside>
+          <section>
+            <h2 class="section-title">Projetos do squad</h2>
+            <div class="mini-projects">
+              @for (p of store.projects(); track p.id) {
+                @if (p.squadId === s.id) {
+                  <a [routerLink]="['/projeto', p.id]" class="panel mini-project"
+                    ><img [src]="p.image" [alt]="p.name" />
+                    <div>
+                      <small>{{ p.status }}</small>
+                      <h3>{{ p.name }}</h3>
+                      <p>{{ p.description }}</p>
+                    </div></a
+                  >
+                }
+              }
+            </div>
+            <h2 class="section-title">O que estamos construindo</h2>
+          </section>
+        </div>
+      } @else {
+        <div class="panel">
+          <h1>Squad não encontrado</h1>
+          <a routerLink="/discover">Explorar projetos</a>
+        </div>
+      }
+    }
+    @if (page === 'project') {
+      @if (project(); as p) {
+        <a routerLink="/discover" class="back-link">← Voltar para Discover</a>
+        <section class="project-hero">
+          <img [src]="p.image" [alt]="p.name" />
+          <div>
+            <p class="eyebrow">{{ store.squad(p.squadId)?.name || p.owner }}</p>
+            <h1>{{ p.name }}</h1>
+            <p>{{ p.description }}</p>
+            <div class="tag-list">
+              @for (t of p.tags; track t) {
+                <span>{{ t }}</span>
+              }
+            </div>
+            <button class="primary-button" (click)="store.atlas.toggleLike(p.id)">
+              {{ store.atlas.isLiked(p.id) ? '♥ Projeto salvo' : '♡ Salvar projeto' }}
+            </button>
+          </div>
+        </section>
+        <div class="project-info-grid">
+          <section class="panel">
+            <p class="eyebrow">Sobre a iniciativa</p>
+            <h2>Detalhes do projeto</h2>
+            <p>{{ p.description }}</p>
+            <p>Responsável: {{ p.owner }}</p>
+            @if (p.squadId) {
+              <a [routerLink]="['/squad', p.squadId]" class="text-button">Conhecer o squad →</a>
+            }
+          </section>
+          <section class="panel">
+            <p class="eyebrow">Onde acontece</p>
+            <h2>Endereço</h2>
+            <p>{{ p.address }}</p>
+            <small>Latitude {{ p.coordinates[1] }} · Longitude {{ p.coordinates[0] }}</small
+            ><a
+              routerLink="/mapa"
+              [queryParams]="{ projeto: p.id }"
+              class="secondary-button full-button"
+              >Ver no mapa ↗</a
+            >
+          </section>
+          <section class="panel">
+            <p class="eyebrow">Acompanhe a evolução</p>
+            <h2>{{ p.status }}</h2>
+            <div class="progress-track">
+              <span
+                [style.width]="
+                  p.status === 'Em operação' ? '100%' : p.status === 'Em pesquisa' ? '20%' : '60%'
+                "
+              ></span>
+            </div>
+            <small>Etapa atual de desenvolvimento</small>
+          </section>
+          <section class="panel update-card">
+            <p class="eyebrow">Última atualização</p>
+            <h2>{{ p.updated ? (p.updated | date: 'dd/MM/yyyy') : 'Ainda não informada' }}</h2>
+            <p>
+              {{
+                p.updated
+                  ? 'Dados do projeto atualizados nesta data.'
+                  : 'Aguardando uma atualização do responsável.'
+              }}
+            </p>
+            <a routerLink="/feed" class="text-button">Ver publicações dos squads →</a>
+          </section>
+        </div>
+      } @else {
+        <div class="panel">
+          <h1>Projeto não encontrado</h1>
+          <a routerLink="/discover">Voltar para os projetos</a>
+        </div>
+      }
+    }
+    @if (page === 'profile') {
+      @if (store.atlas.user(); as user) {
+        <section class="profile-banner">
+          <span class="big-avatar">{{ user.name.slice(0, 1).toUpperCase() }}</span>
+          <div>
+            <p class="eyebrow">Meu perfil</p>
+            <h1>{{ user.name }}</h1>
+            <p>{{ user.email }}</p>
+            <span>{{ joined().length }} squads · {{ profileProjects().length }} projetos</span
+            ><br /><button class="text-button" (click)="store.atlas.logout()">Sair da conta</button>
+          </div>
+        </section>
+        <div class="entity-layout">
+          <aside>
+            <section class="panel">
+              <h2>Linguagens</h2>
+              <div class="tag-list">
+                @for (t of languages(); track t) {
+                  <span>{{ t }}</span>
+                } @empty {
+                  <p>Participe de um squad para agregar competências.</p>
+                }
+              </div>
+              <h2>Tecnologias</h2>
+              <div class="tag-list">
+                @for (t of technologies(); track t) {
+                  <span>{{ t }}</span>
+                }
+              </div>
+              <h2>Áreas de atuação</h2>
+              <div class="tag-list">
+                @for (t of areas(); track t) {
+                  <span>{{ t }}</span>
+                }
+              </div>
+            </section>
+          </aside>
+          <section>
+            <h2 class="section-title">Meus squads</h2>
+            <div class="mini-projects">
+              @for (s of joined(); track s.id) {
+                <a [routerLink]="['/squad', s.id]" class="panel"
+                  ><h3>{{ s.name }}</h3>
+                  <p>{{ s.description }}</p></a
+                >
+              } @empty {
+                <div class="panel">
+                  <p>Você ainda não participa de um squad.</p>
+                  <a routerLink="/squad/atlas" class="text-button">Conhecer o Squad Atlas →</a>
+                </div>
+              }
+            </div>
+            <h2 class="section-title">Histórico de projetos</h2>
+            @for (p of profileProjects(); track p.id) {
+              <a class="history-row panel" [routerLink]="['/projeto', p.id]"
+                ><img [src]="p.image" [alt]="p.name" />
+                <div>
+                  <h3>{{ p.name }}</h3>
+                  <p>{{ p.status }} · {{ p.city }}</p>
+                </div>
+                <span>↗</span></a
+              >
+            } @empty {
+              <p class="empty-state">
+                Seus projetos e os projetos dos seus squads aparecerão aqui.
+              </p>
+            }
+            <h2 class="section-title">Meus projetos cadastrados</h2>
+            @for (p of store.atlas.createdProjects(); track p.id) {
+              @if (p.owner === user.name) {
+                <div class="panel history-row">
+                  <a [routerLink]="['/projeto', p.id]">{{ p.name }}</a
+                  ><button class="text-button" (click)="editingProject.set(p); formOpen.set(true)">
+                    Editar projeto
+                  </button>
+                </div>
+              }
+            }
+            <h2 class="section-title">Projetos salvos</h2>
+            @for (p of store.atlas.likedProjects(); track p.id) {
+              <a class="panel history-row" [routerLink]="['/projeto', p.id]">{{ p.name }} ↗</a>
+            } @empty {
+              <p class="empty-state">Salve projetos no Discover para encontrá-los aqui.</p>
+            }
+            <h2 class="section-title">Timeline dos meus squads</h2>
+            @for (post of profilePosts(); track post.id) {
+              <article class="panel timeline-item">
+                <small
+                  >{{ post.date | date: 'dd/MM/yyyy' }} ·
+                  {{ store.squad(post.squadId)?.name }}</small
+                >
+                <p>{{ post.content }}</p>
+                <a [routerLink]="['/projeto', post.projectId]" class="text-button">Ver projeto →</a>
+              </article>
+            } @empty {
+              <p class="empty-state">Nenhuma atividade dos seus squads ainda.</p>
+            }
+          </section>
+        </div>
+      } @else {
+        <section class="panel signed-out-state">
+          <h1>Seu impacto começa por aqui.</h1>
+          <p>Entre para acompanhar seus squads, projetos e competências.</p>
+          <a routerLink="/login" class="primary-button">Entrar ou criar conta</a>
+        </section>
+      }
+    }
+    @if (page === 'feed' || (page === 'squad' && squad())) {
+      @if (page === 'feed') {
+        <section class="community-heading compact">
+          <div>
+            <p class="eyebrow">Ideias em movimento</p>
+            <h1>Feed da comunidade<span>.</span></h1>
+            <p>Acompanhe o que os squads estão construindo.</p>
+          </div>
+          <input
+            class="feed-search"
+            aria-label="Buscar publicações"
+            placeholder="Buscar conteúdo, squad ou projeto"
+            [ngModel]="search()"
+            (ngModelChange)="search.set($event)"
+          />
+        </section>
+      }
+      <div class="feed-layout" [class.squad-feed]="page === 'squad'">
+        <aside class="feed-sidebar">
+          <section class="panel">
+            <p class="eyebrow">Seu espaço</p>
+            <h2>{{ store.atlas.user()?.name || 'Olá, explorador!' }}</h2>
+            <p>Conecte-se com quem compartilha o seu propósito.</p>
+            <a routerLink="/perfil" class="text-button">Ver meu perfil →</a>
+          </section>
+          <section class="panel">
+            <h2>Conheça os squads</h2>
+            @for (s of store.squads; track s.id) {
+              <a class="member-row" [routerLink]="['/squad', s.id]"
+                ><span class="round-avatar">{{ s.name.slice(6, 7) }}</span>
+                <div>
+                  <strong>{{ s.name }}</strong
+                  ><small>{{ s.city }}</small>
+                </div></a
+              >
+            }
+          </section>
+        </aside>
+        <section class="post-list">
+          @if (store.atlas.user() && joined().length) {
+            <section class="panel composer">
+              <h2>Compartilhe uma atualização do squad</h2>
+              <div class="form-row">
+                <label
+                  >Publicar como<select
+                    [(ngModel)]="publishSquad"
+                    (ngModelChange)="publishProject = ''"
+                  >
+                    <option value="">Selecione seu squad</option>
+                    @for (s of joined(); track s.id) {
+                      <option [value]="s.id">{{ s.name }}</option>
+                    }
+                  </select></label
+                ><label
+                  >Projeto<select [(ngModel)]="publishProject">
+                    <option value="">Selecione o projeto</option>
+                    @for (p of store.projects(); track p.id) {
+                      @if (p.squadId === publishSquad) {
+                        <option [value]="p.id">{{ p.name }}</option>
+                      }
+                    }
+                  </select></label
+                >
+              </div>
+              <textarea
+                [(ngModel)]="content"
+                aria-label="Conteúdo da publicação"
+                placeholder="O que seu squad está construindo?"
+              ></textarea>
+              <div class="composer-footer">
+                <small>Publicações são assinadas pelo squad.</small
+                ><button
+                  class="primary-button"
+                  (click)="publish()"
+                  [disabled]="!content.trim() || !publishProject"
+                >
+                  Publicar ↗
+                </button>
+              </div>
+              <p role="status">{{ notice }}</p>
+            </section>
+          } @else {
+            <div class="panel feed-invitation">
+              <p>
+                As publicações são feitas pelos squads.
+                {{
+                  store.atlas.user()
+                    ? 'Participe de um squad para publicar.'
+                    : 'Entre e participe de um squad para publicar.'
+                }}
+              </p>
+              <a
+                [routerLink]="store.atlas.user() ? '/squad/atlas' : '/login'"
+                class="text-button"
+                >{{ store.atlas.user() ? 'Conhecer squad →' : 'Entrar →' }}</a
+              >
+            </div>
+          }
+          @for (post of filteredPosts(); track post.id) {
+            <article class="panel post-card">
+              <div class="post-author">
+                <a [routerLink]="['/squad', post.squadId]" class="round-avatar">{{
+                  store.squad(post.squadId)?.name?.slice(6, 7)
+                }}</a>
+                <div>
+                  <a [routerLink]="['/squad', post.squadId]"
+                    ><strong>{{ store.squad(post.squadId)?.name }}</strong></a
+                  ><small>{{ post.date | date: 'dd/MM/yyyy · HH:mm' }}</small>
+                </div>
+                <span>↗</span>
+              </div>
+              <p class="post-content">{{ post.content }}</p>
+              @for (p of store.projects(); track p.id) {
+                @if (p.id === post.projectId) {
+                  <a class="post-project" [routerLink]="['/projeto', p.id]"
+                    ><img [src]="p.image" [alt]="p.name" />
+                    <div>
+                      <small>CONHEÇA O PROJETO</small>
+                      <h3>{{ p.name }}</h3>
+                      <p>⌖ {{ p.city }} · {{ p.status }}</p>
+                    </div></a
+                  >
+                }
+              }
+              <div class="post-count">
+                <span>{{ post.likes }} curtidas</span
+                ><span>{{ post.comments.length }} comentários</span>
+              </div>
+              <div class="post-actions">
+                <button
+                  [class.saved]="post.liked"
+                  (click)="store.like(post.id)"
+                  [attr.aria-pressed]="post.liked"
+                >
+                  {{ post.liked ? '♥ Curtido' : '♡ Curtir' }}</button
+                ><button (click)="commentInput.focus()">◯ Comentar</button
+                ><a routerLink="/chat">↗ Conversar</a>
+              </div>
+              @for (c of post.comments; track $index) {
+                <div class="comment">
+                  <strong>{{ c.author }}</strong>
+                  <p>{{ c.text }}</p>
+                </div>
+              }
+              <form class="comment-form" (ngSubmit)="comment(post.id)">
+                <input
+                  #commentInput
+                  [name]="'comment-' + post.id"
+                  [(ngModel)]="commentDrafts[post.id]"
+                  [disabled]="!store.atlas.user()"
+                  [placeholder]="
+                    store.atlas.user() ? 'Escreva um comentário…' : 'Entre para comentar'
+                  "
+                  aria-label="Escrever comentário"
+                /><button
+                  class="text-button"
+                  [disabled]="!store.atlas.user() || !commentDrafts[post.id]?.trim()"
+                >
+                  Enviar
+                </button>
+              </form>
+            </article>
+          } @empty {
+            <div class="panel empty-state">Nenhuma publicação encontrada.</div>
+          }
+        </section>
+        <aside class="feed-sidebar">
+          <section class="impact-note">
+            <p class="eyebrow">Juntos, vamos além</p>
+            <h2>A próxima grande ideia pode começar com uma conexão.</h2>
+            <a routerLink="/discover" class="secondary-button">Descobrir projetos ↗</a>
+          </section>
+        </aside>
+      </div>
+    }
+    @if (page === 'chat') {
+      <section class="community-heading compact">
+        <div>
+          <p class="eyebrow">Conversas que conectam</p>
+          <h1>Mensagens<span>.</span></h1>
+          <p>Troque ideias e compartilhe seu contato com os squads.</p>
+        </div>
+      </section>
+      <p class="local-notice">
+        Prévia local: as mensagens ficam neste navegador e não são entregues a outros usuários.
+      </p>
+      <div class="chat-layout panel">
+        <aside class="conversation-list">
+          <h2>Conversas</h2>
+          @for (s of store.squads; track s.id) {
+            <button
+              class="conversation-option"
+              [class.active]="chatSquad() === s.id"
+              (click)="chatSquad.set(s.id)"
+            >
+              <span class="round-avatar">{{ s.name.slice(6, 7) }}</span
+              ><span
+                ><strong>{{ s.name }}</strong
+                ><small>{{ s.city }}</small></span
+              >
+            </button>
+          }
+        </aside>
+        <section class="chat-conversation">
+          <div class="chat-heading">
+            <span class="round-avatar">{{ store.squad(chatSquad())?.name?.slice(6, 7) }}</span>
+            <div>
+              <strong>{{ store.squad(chatSquad())?.name }}</strong
+              ><small>Conversa com o squad</small>
+            </div>
+            <a [routerLink]="['/squad', chatSquad()]">Ver squad ↗</a>
+          </div>
+          <div class="message-list" aria-live="polite">
+            @for (m of conversation(); track m.id) {
+              <div class="message" [class.sent]="m.sent">
+                @if (m.contact) {
+                  <small>CARD DE CONTATO</small><strong>{{ m.contact }}</strong>
+                } @else {
+                  <p>{{ m.text }}</p>
+                }
+                <small>{{
+                  m.sent ? 'Você · Salvo localmente' : store.squad(m.squadId)?.name
+                }}</small>
+              </div>
+            } @empty {
+              <p class="empty-state">Comece uma conversa com este squad.</p>
+            }
+          </div>
+          @if (store.atlas.user()) {
+            <form class="message-form" (ngSubmit)="send()">
+              <button
+                type="button"
+                class="secondary-button"
+                (click)="contact()"
+                title="Enviar meu card de contato"
+              >
+                Contato +</button
+              ><input
+                name="message"
+                [(ngModel)]="message"
+                placeholder="Escreva uma mensagem…"
+                aria-label="Mensagem"
+              /><button class="primary-button" [disabled]="!message.trim()">Enviar ↗</button>
+            </form>
+          } @else {
+            <div class="panel">
+              <a routerLink="/login" class="text-button"
+                >Entre para enviar mensagens e seu card de contato →</a
+              >
+            </div>
+          }
+        </section>
+      </div>
+    }
+  </main>
+  @if (page !== 'chat') {
+    <button
+      class="chat-launcher"
+      (click)="chatOpen.set(!chatOpen())"
+      [attr.aria-expanded]="chatOpen()"
+    >
+      ◯ Mensagens <span>{{ chatOpen() ? '−' : '+' }}</span>
+    </button>
+    @if (chatOpen()) {
+      <section class="chat-dock panel">
+        <div class="panel-title">
+          <h2>Mensagens</h2>
+          <button class="icon-button" aria-label="Fechar mensagens" (click)="chatOpen.set(false)">
+            ×
+          </button>
+        </div>
+        <label
+          >Squad<select
+            aria-label="Squad da conversa"
+            [ngModel]="chatSquad()"
+            (ngModelChange)="chatSquad.set($event)"
+          >
+            @for (s of store.squads; track s.id) {
+              <option [value]="s.id">{{ s.name }}</option>
+            }
+          </select></label
+        >
+        <div class="message-list" aria-live="polite">
+          @for (m of conversation(); track m.id) {
+            <div class="message" [class.sent]="m.sent">
+              @if (m.contact) {
+                <small>CARD DE CONTATO</small><strong>{{ m.contact }}</strong>
+              } @else {
+                <p>{{ m.text }}</p>
+              }
+              <small>{{ m.sent ? 'Você' : store.squad(m.squadId)?.name }}</small>
+            </div>
+          } @empty {
+            <p>Comece uma conversa.</p>
+          }
+        </div>
+        @if (store.atlas.user()) {
+          <form (ngSubmit)="send()">
+            <input
+              name="dock-message"
+              [(ngModel)]="message"
+              placeholder="Escreva uma mensagem…"
+              aria-label="Mensagem no painel lateral"
+            />
+            <div class="composer-footer">
+              <button type="button" class="text-button" (click)="contact()">Contato +</button
+              ><button class="primary-button" [disabled]="!message.trim()">Enviar ↗</button>
+            </div>
+          </form>
+        } @else {
+          <a routerLink="/login" class="text-button">Entre para conversar →</a>
+        }
+        <a routerLink="/chat" class="text-button">Abrir página de mensagens ↗</a>
+        <p class="local-notice">Prévia local, sem entrega a outros usuários.</p>
+      </section>
+    }
+  }
+  @if (formOpen()) {
+    <app-project-form
+      [project]="editingProject()"
+      (cancel)="formOpen.set(false)"
+      (saved)="formOpen.set(false)"
+    />
+  }
+</div>
