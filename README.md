@@ -31,6 +31,4 @@ npm run build
 npm test -- --watch=false
 ```
 
-## Conteúdo anterior
-
-Os arquivos `script.js` e `style.css` foram preservados do banner digital que já existia no repositório. A aplicação atual usa o código Angular dentro de `src/`.
+O código da aplicação está em `src/` e os arquivos públicos em `public/`.
