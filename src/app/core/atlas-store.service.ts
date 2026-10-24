@@ -18,6 +18,9 @@ export interface AtlasProject {
   address?: string;
   tags?: string[];
   updated?: string;
+  visibility?: 'open' | 'closed';
+  featured?: boolean;
+  showOnMap?: boolean;
 }
 
 const BUILT_IN_PROJECTS: AtlasProject[] = [

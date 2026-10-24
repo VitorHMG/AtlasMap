@@ -503,3 +503,7 @@ a:focus-visible, button:focus-visible, select:focus-visible { outline: 3px solid
 .chat-dock .message-list { max-height: 210px; padding: 16px 0; }
 .chat-dock .message { max-width: 95%; font-size: .8rem; }
 .chat-dock > .text-button { display: block; margin-top: 16px; }
+
+.featured-pill { position: absolute; top: .75rem; left: .75rem; z-index: 1; border-radius: 999px; padding: .35rem .65rem; background: #53fa85; color: #07150d; font-size: .7rem; font-weight: 800; text-transform: uppercase; }
+.profile-project-row { margin-bottom: .5rem; }
+.profile-project-row > .text-button { width: 100%; text-align: left; padding: .75rem; font-weight: 700; }

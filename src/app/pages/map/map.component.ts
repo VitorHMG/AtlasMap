@@ -65,7 +65,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   private renderProjects(leaflet: any): void {
     this.markerLayer?.remove();
     this.markerLayer = leaflet.layerGroup().addTo(this.map);
-    this.store.projects().forEach((project) => {
+    this.store.projects().filter((project) => project.showOnMap).forEach((project) => {
       const marker = leaflet.circleMarker([project.coordinates[1], project.coordinates[0]], {
         radius: 9,
         color: '#07150d',

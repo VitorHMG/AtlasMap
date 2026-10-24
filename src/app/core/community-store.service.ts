@@ -11,6 +11,7 @@ export interface Squad {
   languages: string[];
   technologies: string[];
   areas: string[];
+  plan: 'freemium' | 'plan1';
 }
 export interface Post {
   id: string;
@@ -28,6 +29,7 @@ export interface Message {
   text: string;
   sent: boolean;
   contact?: string;
+  senderSquadId?: string;
 }
 @Injectable({ providedIn: 'root' })
 export class CommunityStoreService {
@@ -44,6 +46,7 @@ export class CommunityStoreService {
       languages: ['TypeScript', 'Python'],
       technologies: ['Angular', 'IoT', 'PostgreSQL'],
       areas: ['Energia solar', 'Energia eólica'],
+      plan: 'plan1',
     },
     {
       id: 'verde',
@@ -56,56 +59,60 @@ export class CommunityStoreService {
       languages: ['Python', 'JavaScript'],
       technologies: ['React', 'Sensores', 'GIS'],
       areas: ['Biomassa', 'Recursos hídricos'],
+      plan: 'freemium',
     },
   ];
   readonly projects = computed(() =>
-    this.atlas
-      .projects()
-      .map((p) => ({
-        ...p,
-        squadId:
-          p.squadId ??
-          (['hidreletrico', 'biomassa'].includes(p.id) ? 'verde' : p.userCreated ? '' : 'atlas'),
-        city:
-          (
-            {
-              solar: 'São Paulo, SP',
-              eolico: 'Fortaleza, CE',
-              hidreletrico: 'Foz do Iguaçu, PR',
-              biomassa: 'Sorocaba, SP',
-            } as Record<string, string>
-          )[p.id] ?? 'Localização cadastrada no mapa',
-        address:
-          p.address ??
-          (
-            {
-              solar: 'São Paulo, São Paulo, Brasil',
-              eolico: 'Fortaleza, Ceará, Brasil',
-              hidreletrico: 'Foz do Iguaçu, Paraná, Brasil',
-              biomassa: 'Sorocaba, São Paulo, Brasil',
-            } as Record<string, string>
-          )[p.id] ??
-          `${p.coordinates[1]}, ${p.coordinates[0]}`,
-        status:
-          p.status ??
-          (p.id === 'solar'
-            ? 'Em desenvolvimento'
-            : p.id === 'biomassa'
-              ? 'Em pesquisa'
-              : 'Em operação'),
-        tags:
-          p.tags ??
-          (p.id === 'solar'
-            ? ['Energia solar', 'IoT', 'Python']
-            : p.id === 'eolico'
-              ? ['Energia eólica', 'IoT', 'TypeScript']
-              : p.id === 'hidreletrico'
-                ? ['Recursos hídricos', 'GIS', 'Python']
-                : p.id === 'biomassa'
-                  ? ['Biomassa', 'Sensores', 'JavaScript']
-                  : ['Sustentabilidade']),
-        updated: p.updated ?? (p.userCreated ? '' : '2026-10-06T14:30:00'),
-      })),
+    this.atlas.projects().map((p) => ({
+      ...p,
+      squadId:
+        p.squadId ??
+        (['hidreletrico', 'biomassa'].includes(p.id) ? 'verde' : p.userCreated ? '' : 'atlas'),
+      city:
+        (
+          {
+            solar: 'São Paulo, SP',
+            eolico: 'Fortaleza, CE',
+            hidreletrico: 'Foz do Iguaçu, PR',
+            biomassa: 'Sorocaba, SP',
+          } as Record<string, string>
+        )[p.id] ?? 'Localização cadastrada no mapa',
+      address:
+        p.address ??
+        (
+          {
+            solar: 'São Paulo, São Paulo, Brasil',
+            eolico: 'Fortaleza, Ceará, Brasil',
+            hidreletrico: 'Foz do Iguaçu, Paraná, Brasil',
+            biomassa: 'Sorocaba, São Paulo, Brasil',
+          } as Record<string, string>
+        )[p.id] ??
+        `${p.coordinates[1]}, ${p.coordinates[0]}`,
+      status:
+        p.status ??
+        (p.id === 'solar'
+          ? 'Em desenvolvimento'
+          : p.id === 'biomassa'
+            ? 'Em pesquisa'
+            : 'Em operação'),
+      tags:
+        p.tags ??
+        (p.id === 'solar'
+          ? ['Energia solar', 'IoT', 'Python']
+          : p.id === 'eolico'
+            ? ['Energia eólica', 'IoT', 'TypeScript']
+            : p.id === 'hidreletrico'
+              ? ['Recursos hídricos', 'GIS', 'Python']
+              : p.id === 'biomassa'
+                ? ['Biomassa', 'Sensores', 'JavaScript']
+                : ['Sustentabilidade']),
+      updated: p.updated ?? (p.userCreated ? '' : '2026-10-06T14:30:00'),
+      visibility:
+        p.visibility ??
+        (p.squadId === 'verde' || ['hidreletrico', 'biomassa'].includes(p.id) ? 'open' : 'closed'),
+      featured: p.featured ?? (p.squadId === 'atlas' || ['solar', 'eolico'].includes(p.id)),
+      showOnMap: p.showOnMap ?? (p.squadId === 'atlas' || ['solar', 'eolico'].includes(p.id)),
+    })),
   );
   readonly posts = signal<Post[]>(
     this.read('atlas-community-posts', [
@@ -163,13 +170,27 @@ export class CommunityStoreService {
   squad(id: string) {
     return this.squads.find((s) => s.id === id);
   }
-  join(id: string) {
-    if (!this.atlas.user()) return;
+  canJoin(id: string): boolean {
+    const squad = this.squad(id);
+    return (
+      !!squad &&
+      (squad.plan === 'plan1' ||
+        this.projects().some((p) => p.squadId === id && p.visibility === 'open'))
+    );
+  }
+  isPaidMember(id: string): boolean {
+    return this.memberships().includes(id) && this.squad(id)?.plan === 'plan1';
+  }
+  join(id: string): boolean {
+    if (!this.atlas.user()) return false;
+    const joining = !this.memberships().includes(id);
+    if (joining && !this.canJoin(id)) return false;
     const next = this.memberships().includes(id)
       ? this.memberships().filter((x) => x !== id)
       : [...this.memberships(), id];
     this.memberships.set(next);
     this.write('atlas-memberships', next);
+    return true;
   }
   like(id: string) {
     this.updatePosts(
@@ -214,14 +235,22 @@ export class CommunityStoreService {
     ]);
     return true;
   }
-  send(squadId: string, text: string, contact?: string) {
-    if (!this.atlas.user() || (!text.trim() && !contact)) return;
+  send(squadId: string, text: string, contact?: string, senderSquadId?: string): boolean {
+    if (
+      !this.atlas.user() ||
+      (!text.trim() && !contact) ||
+      !senderSquadId ||
+      !this.isPaidMember(senderSquadId) ||
+      !this.squad(squadId)
+    )
+      return false;
     const next = [
       ...this.messages(),
-      { id: crypto.randomUUID(), squadId, text: text.trim(), sent: true, contact },
+      { id: crypto.randomUUID(), squadId, text: text.trim(), sent: true, contact, senderSquadId },
     ];
     this.messages.set(next);
     this.write('atlas-community-messages', next);
+    return true;
   }
   private updatePosts(posts: Post[]) {
     this.posts.set(posts);

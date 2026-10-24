@@ -64,6 +64,30 @@ import { AtlasProject, AtlasStoreService } from '../core/atlas-store.service';
           </select>
         </label>
         <label
+          >Tipo de código<select
+            name="visibility"
+            [(ngModel)]="visibility"
+            [disabled]="!selectedPlan1"
+          >
+            <option value="open">Open-source</option>
+            <option value="closed">Código fechado</option>
+          </select></label
+        >
+        @if (selectedPlan1) {
+          <label
+            ><input type="checkbox" name="featured" [(ngModel)]="featured" /> Destacar projeto no
+            Discover</label
+          >
+          <label
+            ><input type="checkbox" name="showOnMap" [(ngModel)]="showOnMap" /> Mostrar localização
+            no mapa</label
+          >
+        } @else {
+          <p class="local-notice">
+            Destaque, código fechado e geolocalização no mapa exigem o Plano 1 do squad.
+          </p>
+        }
+        <label
           >Endereço<input
             name="address"
             [(ngModel)]="address"
@@ -118,6 +142,12 @@ export class ProjectFormComponent {
   readonly saved = output<AtlasProject>();
 
   squadId = '';
+  visibility: 'open' | 'closed' = 'open';
+  featured = false;
+  showOnMap = false;
+  get selectedPlan1(): boolean {
+    return this.community.squad(this.squadId)?.plan === 'plan1';
+  }
   address = '';
   status = 'Em pesquisa';
   tags = '';
@@ -131,6 +161,9 @@ export class ProjectFormComponent {
     effect(() => {
       const project = this.project();
       this.squadId = project?.squadId ?? '';
+      this.visibility = project?.visibility ?? 'open';
+      this.featured = project?.featured ?? false;
+      this.showOnMap = project?.showOnMap ?? false;
       this.address = project?.address ?? '';
       this.status = project?.status ?? 'Em pesquisa';
       this.tags = project?.tags?.join(', ') ?? '';
@@ -145,9 +178,14 @@ export class ProjectFormComponent {
   submit(): void {
     if (!this.name.trim() || !this.owner.trim() || !this.description.trim()) return;
     if (this.longitude === null || this.latitude === null) return;
+    if (!this.selectedPlan1 && (this.visibility === 'closed' || this.featured || this.showOnMap))
+      return;
     const result = this.store.saveProject(
       {
         squadId: this.squadId,
+        visibility: this.visibility,
+        featured: this.selectedPlan1 && this.featured,
+        showOnMap: this.selectedPlan1 && this.showOnMap,
         address: this.address.trim(),
         status: this.status,
         tags: this.tags

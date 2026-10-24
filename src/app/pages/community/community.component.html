@@ -66,8 +66,11 @@
                 <a [routerLink]="['/projeto', p.id]" class="card-photo"
                   ><img [src]="p.image" [alt]="p.name" /><span class="status-pill">{{
                     p.status
-                  }}</span></a
-                >
+                  }}</span>
+                  @if (p.featured) {
+                    <span class="featured-pill">Destaque</span>
+                  }
+                </a>
                 <div class="card-body">
                   <a [routerLink]="['/squad', p.squadId]" class="squad-caption">{{
                     store.squad(p.squadId)?.name || p.owner
@@ -77,6 +80,7 @@
                   >
                   <p>{{ p.description }}</p>
                   <div class="tag-list">
+                    <span>{{ p.visibility === 'open' ? 'Open-source' : 'Código fechado' }}</span>
                     @for (t of p.tags; track t) {
                       <button (click)="tag.set(t)">{{ t }}</button>
                     }
@@ -130,13 +134,32 @@
                 }
               </div>
               @if (store.atlas.user()) {
-                <button class="primary-button full-button" (click)="store.join(s.id)">
-                  {{ store.memberships().includes(s.id) ? 'Sair do squad' : 'Participar do squad' }}
-                </button>
+                <p class="eyebrow">
+                  {{
+                    s.plan === 'plan1'
+                      ? 'Plano 1 · projetos fechados, destaque e mapa'
+                      : 'Freemium · participação em squads com projetos open-source'
+                  }}
+                </p>
+                @if (store.memberships().includes(s.id) || store.canJoin(s.id)) {
+                  <button class="primary-button full-button" (click)="store.join(s.id)">
+                    {{
+                      store.memberships().includes(s.id) ? 'Sair do squad' : 'Participar do squad'
+                    }}
+                  </button>
+                } @else {
+                  <p class="local-notice">
+                    Este squad ainda não tem projeto open-source para participação Freemium.
+                  </p>
+                }
               } @else {
                 <a routerLink="/login" class="primary-button full-button">Entrar para participar</a>
               }
-              <a routerLink="/chat" class="secondary-button full-button">Conversar com o squad</a>
+              @if (store.isPaidMember(s.id)) {
+                <a routerLink="/chat" class="secondary-button full-button">Conversar com o squad</a>
+              } @else {
+                <p class="local-notice">Conversas entre squads estão disponíveis no Plano 1.</p>
+              }
             </section>
             <section class="panel">
               <h2>Membros</h2>
@@ -170,7 +193,10 @@
                   <a [routerLink]="['/projeto', p.id]" class="panel mini-project"
                     ><img [src]="p.image" [alt]="p.name" />
                     <div>
-                      <small>{{ p.status }}</small>
+                      <small
+                        >{{ p.status }} ·
+                        {{ p.visibility === 'open' ? 'Open-source' : 'Código fechado' }}</small
+                      >
                       <h3>{{ p.name }}</h3>
                       <p>{{ p.description }}</p>
                     </div></a
@@ -221,13 +247,19 @@
             <p class="eyebrow">Onde acontece</p>
             <h2>Endereço</h2>
             <p>{{ p.address }}</p>
-            <small>Latitude {{ p.coordinates[1] }} · Longitude {{ p.coordinates[0] }}</small
-            ><a
-              routerLink="/mapa"
-              [queryParams]="{ projeto: p.id }"
-              class="secondary-button full-button"
-              >Ver no mapa ↗</a
-            >
+            @if (p.showOnMap) {
+              <small>Latitude {{ p.coordinates[1] }} · Longitude {{ p.coordinates[0] }}</small>
+              <a
+                routerLink="/mapa"
+                [queryParams]="{ projeto: p.id }"
+                class="secondary-button full-button"
+                >Ver no mapa ↗</a
+              >
+            } @else {
+              <p class="local-notice">
+                A localização no mapa está disponível para squads do Plano 1.
+              </p>
+            }
           </section>
           <section class="panel">
             <p class="eyebrow">Acompanhe a evolução</p>
@@ -315,14 +347,28 @@
             </div>
             <h2 class="section-title">Histórico de projetos</h2>
             @for (p of profileProjects(); track p.id) {
-              <a class="history-row panel" [routerLink]="['/projeto', p.id]"
-                ><img [src]="p.image" [alt]="p.name" />
-                <div>
-                  <h3>{{ p.name }}</h3>
-                  <p>{{ p.status }} · {{ p.city }}</p>
-                </div>
-                <span>↗</span></a
-              >
+              <div class="panel profile-project-row">
+                <button
+                  type="button"
+                  class="text-button"
+                  [attr.aria-expanded]="expandedProjectIds().includes(p.id)"
+                  (click)="toggleProfileProject(p.id)"
+                >
+                  {{ expandedProjectIds().includes(p.id) ? '⌄' : '›' }} {{ p.name }}
+                </button>
+                @if (expandedProjectIds().includes(p.id)) {
+                  <a class="history-row" [routerLink]="['/projeto', p.id]"
+                    ><img [src]="p.image" [alt]="p.name" />
+                    <div>
+                      <p>{{ p.status }} · {{ p.city }}</p>
+                      <small>{{
+                        p.visibility === 'open' ? 'Open-source' : 'Código fechado'
+                      }}</small>
+                    </div>
+                    <span>↗</span></a
+                  >
+                }
+              </div>
             } @empty {
               <p class="empty-state">
                 Seus projetos e os projetos dos seus squads aparecerão aqui.
@@ -369,179 +415,10 @@
       }
     }
     @if (page === 'feed' || (page === 'squad' && squad())) {
-      @if (page === 'feed') {
-        <section class="community-heading compact">
-          <div>
-            <p class="eyebrow">Ideias em movimento</p>
-            <h1>Feed da comunidade<span>.</span></h1>
-            <p>Acompanhe o que os squads estão construindo.</p>
-          </div>
-          <input
-            class="feed-search"
-            aria-label="Buscar publicações"
-            placeholder="Buscar conteúdo, squad ou projeto"
-            [ngModel]="search()"
-            (ngModelChange)="search.set($event)"
-          />
-        </section>
-      }
-      <div class="feed-layout" [class.squad-feed]="page === 'squad'">
-        <aside class="feed-sidebar">
-          <section class="panel">
-            <p class="eyebrow">Seu espaço</p>
-            <h2>{{ store.atlas.user()?.name || 'Olá, explorador!' }}</h2>
-            <p>Conecte-se com quem compartilha o seu propósito.</p>
-            <a routerLink="/perfil" class="text-button">Ver meu perfil →</a>
-          </section>
-          <section class="panel">
-            <h2>Conheça os squads</h2>
-            @for (s of store.squads; track s.id) {
-              <a class="member-row" [routerLink]="['/squad', s.id]"
-                ><span class="round-avatar">{{ s.name.slice(6, 7) }}</span>
-                <div>
-                  <strong>{{ s.name }}</strong
-                  ><small>{{ s.city }}</small>
-                </div></a
-              >
-            }
-          </section>
-        </aside>
-        <section class="post-list">
-          @if (store.atlas.user() && joined().length) {
-            <section class="panel composer">
-              <h2>Compartilhe uma atualização do squad</h2>
-              <div class="form-row">
-                <label
-                  >Publicar como<select
-                    [(ngModel)]="publishSquad"
-                    (ngModelChange)="publishProject = ''"
-                  >
-                    <option value="">Selecione seu squad</option>
-                    @for (s of joined(); track s.id) {
-                      <option [value]="s.id">{{ s.name }}</option>
-                    }
-                  </select></label
-                ><label
-                  >Projeto<select [(ngModel)]="publishProject">
-                    <option value="">Selecione o projeto</option>
-                    @for (p of store.projects(); track p.id) {
-                      @if (p.squadId === publishSquad) {
-                        <option [value]="p.id">{{ p.name }}</option>
-                      }
-                    }
-                  </select></label
-                >
-              </div>
-              <textarea
-                [(ngModel)]="content"
-                aria-label="Conteúdo da publicação"
-                placeholder="O que seu squad está construindo?"
-              ></textarea>
-              <div class="composer-footer">
-                <small>Publicações são assinadas pelo squad.</small
-                ><button
-                  class="primary-button"
-                  (click)="publish()"
-                  [disabled]="!content.trim() || !publishProject"
-                >
-                  Publicar ↗
-                </button>
-              </div>
-              <p role="status">{{ notice }}</p>
-            </section>
-          } @else {
-            <div class="panel feed-invitation">
-              <p>
-                As publicações são feitas pelos squads.
-                {{
-                  store.atlas.user()
-                    ? 'Participe de um squad para publicar.'
-                    : 'Entre e participe de um squad para publicar.'
-                }}
-              </p>
-              <a
-                [routerLink]="store.atlas.user() ? '/squad/atlas' : '/login'"
-                class="text-button"
-                >{{ store.atlas.user() ? 'Conhecer squad →' : 'Entrar →' }}</a
-              >
-            </div>
-          }
-          @for (post of filteredPosts(); track post.id) {
-            <article class="panel post-card">
-              <div class="post-author">
-                <a [routerLink]="['/squad', post.squadId]" class="round-avatar">{{
-                  store.squad(post.squadId)?.name?.slice(6, 7)
-                }}</a>
-                <div>
-                  <a [routerLink]="['/squad', post.squadId]"
-                    ><strong>{{ store.squad(post.squadId)?.name }}</strong></a
-                  ><small>{{ post.date | date: 'dd/MM/yyyy · HH:mm' }}</small>
-                </div>
-                <span>↗</span>
-              </div>
-              <p class="post-content">{{ post.content }}</p>
-              @for (p of store.projects(); track p.id) {
-                @if (p.id === post.projectId) {
-                  <a class="post-project" [routerLink]="['/projeto', p.id]"
-                    ><img [src]="p.image" [alt]="p.name" />
-                    <div>
-                      <small>CONHEÇA O PROJETO</small>
-                      <h3>{{ p.name }}</h3>
-                      <p>⌖ {{ p.city }} · {{ p.status }}</p>
-                    </div></a
-                  >
-                }
-              }
-              <div class="post-count">
-                <span>{{ post.likes }} curtidas</span
-                ><span>{{ post.comments.length }} comentários</span>
-              </div>
-              <div class="post-actions">
-                <button
-                  [class.saved]="post.liked"
-                  (click)="store.like(post.id)"
-                  [attr.aria-pressed]="post.liked"
-                >
-                  {{ post.liked ? '♥ Curtido' : '♡ Curtir' }}</button
-                ><button (click)="commentInput.focus()">◯ Comentar</button
-                ><a routerLink="/chat">↗ Conversar</a>
-              </div>
-              @for (c of post.comments; track $index) {
-                <div class="comment">
-                  <strong>{{ c.author }}</strong>
-                  <p>{{ c.text }}</p>
-                </div>
-              }
-              <form class="comment-form" (ngSubmit)="comment(post.id)">
-                <input
-                  #commentInput
-                  [name]="'comment-' + post.id"
-                  [(ngModel)]="commentDrafts[post.id]"
-                  [disabled]="!store.atlas.user()"
-                  [placeholder]="
-                    store.atlas.user() ? 'Escreva um comentário…' : 'Entre para comentar'
-                  "
-                  aria-label="Escrever comentário"
-                /><button
-                  class="text-button"
-                  [disabled]="!store.atlas.user() || !commentDrafts[post.id]?.trim()"
-                >
-                  Enviar
-                </button>
-              </form>
-            </article>
-          } @empty {
-            <div class="panel empty-state">Nenhuma publicação encontrada.</div>
-          }
-        </section>
-        <aside class="feed-sidebar">
-          <section class="impact-note">
-            <p class="eyebrow">Juntos, vamos além</p>
-            <h2>A próxima grande ideia pode começar com uma conexão.</h2>
-            <a routerLink="/discover" class="secondary-button">Descobrir projetos ↗</a>
-          </section>
-        </aside>
-      </div>
+      <app-community-feed
+        [squadId]="page === 'squad' ? params().get('id') : null"
+        [showHeading]="page === 'feed'"
+      />
     }
     @if (page === 'chat') {
       <section class="community-heading compact">
@@ -589,18 +466,29 @@
                   <p>{{ m.text }}</p>
                 }
                 <small>{{
-                  m.sent ? 'Você · Salvo localmente' : store.squad(m.squadId)?.name
+                  m.sent
+                    ? (store.squad(m.senderSquadId ?? '')?.name ?? 'Squad') + ' · Salvo localmente'
+                    : store.squad(m.senderSquadId ?? m.squadId)?.name
                 }}</small>
               </div>
             } @empty {
               <p class="empty-state">Comece uma conversa com este squad.</p>
             }
           </div>
-          @if (store.atlas.user()) {
+          @if (store.atlas.user() && paidSquads().length) {
             <form class="message-form" (ngSubmit)="send()">
+              <label
+                >Enviar como<select name="senderSquad" [(ngModel)]="senderSquadId">
+                  <option value="">Selecione seu squad pago</option>
+                  @for (s of paidSquads(); track s.id) {
+                    <option [value]="s.id">{{ s.name }}</option>
+                  }
+                </select></label
+              >
               <button
                 type="button"
                 class="secondary-button"
+                [disabled]="!senderSquadId"
                 (click)="contact()"
                 title="Enviar meu card de contato"
               >
@@ -610,13 +498,15 @@
                 [(ngModel)]="message"
                 placeholder="Escreva uma mensagem…"
                 aria-label="Mensagem"
-              /><button class="primary-button" [disabled]="!message.trim()">Enviar ↗</button>
+              /><button class="primary-button" [disabled]="!message.trim() || !senderSquadId">
+                Enviar ↗
+              </button>
             </form>
+          } @else if (store.atlas.user()) {
+            <p class="local-notice">Para conversar, participe de um squad no Plano 1.</p>
           } @else {
             <div class="panel">
-              <a routerLink="/login" class="text-button"
-                >Entre para enviar mensagens e seu card de contato →</a
-              >
+              <a routerLink="/login" class="text-button">Entre para conversar com os squads.</a>
             </div>
           }
         </section>
@@ -658,14 +548,26 @@
               } @else {
                 <p>{{ m.text }}</p>
               }
-              <small>{{ m.sent ? 'Você' : store.squad(m.squadId)?.name }}</small>
+              <small>{{
+                m.sent
+                  ? (store.squad(m.senderSquadId ?? '')?.name ?? 'Squad')
+                  : store.squad(m.senderSquadId ?? m.squadId)?.name
+              }}</small>
             </div>
           } @empty {
             <p>Comece uma conversa.</p>
           }
         </div>
-        @if (store.atlas.user()) {
+        @if (store.atlas.user() && paidSquads().length) {
           <form (ngSubmit)="send()">
+            <label
+              >Enviar como<select name="dockSenderSquad" [(ngModel)]="senderSquadId">
+                <option value="">Selecione seu squad pago</option>
+                @for (s of paidSquads(); track s.id) {
+                  <option [value]="s.id">{{ s.name }}</option>
+                }
+              </select></label
+            >
             <input
               name="dock-message"
               [(ngModel)]="message"
@@ -673,10 +575,20 @@
               aria-label="Mensagem no painel lateral"
             />
             <div class="composer-footer">
-              <button type="button" class="text-button" (click)="contact()">Contato +</button
-              ><button class="primary-button" [disabled]="!message.trim()">Enviar ↗</button>
+              <button
+                type="button"
+                class="text-button"
+                [disabled]="!senderSquadId"
+                (click)="contact()"
+              >
+                Contato +</button
+              ><button class="primary-button" [disabled]="!message.trim() || !senderSquadId">
+                Enviar ↗
+              </button>
             </div>
           </form>
+        } @else if (store.atlas.user()) {
+          <p class="local-notice">Somente squads no Plano 1 podem iniciar conversas.</p>
         } @else {
           <a routerLink="/login" class="text-button">Entre para conversar →</a>
         }

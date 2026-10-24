@@ -7,10 +7,18 @@ import { AtlasProject } from '../../core/atlas-store.service';
 import { CommunityStoreService } from '../../core/community-store.service';
 import { AppHeaderComponent } from '../../shared/app-header.component';
 import { ProjectFormComponent } from '../../shared/project-form.component';
+import { CommunityFeedComponent } from './community-feed.component';
 
 @Component({
   selector: 'app-community',
-  imports: [DatePipe, FormsModule, RouterLink, AppHeaderComponent, ProjectFormComponent],
+  imports: [
+    DatePipe,
+    FormsModule,
+    RouterLink,
+    AppHeaderComponent,
+    ProjectFormComponent,
+    CommunityFeedComponent,
+  ],
   templateUrl: './community.component.html',
 })
 export class CommunityComponent {
@@ -25,6 +33,8 @@ export class CommunityComponent {
   readonly project = computed(() =>
     this.store.projects().find((p) => p.id === this.params().get('id')),
   );
+  readonly expandedProjectIds = signal<string[]>([]);
+  readonly paidSquads = computed(() => this.joined().filter((s) => s.plan === 'plan1'));
   readonly joined = computed(() =>
     this.store.squads.filter((s) => this.store.memberships().includes(s.id)),
   );
@@ -68,7 +78,8 @@ export class CommunityComponent {
           (!this.tag() || p.tags.includes(this.tag())) &&
           (!this.status() || p.status === this.status()) &&
           (!this.city() || p.city === this.city()),
-      ),
+      )
+      .sort((a, b) => Number(!!b.featured) - Number(!!a.featured)),
   );
   readonly filteredPosts = computed(() =>
     this.store
@@ -91,7 +102,14 @@ export class CommunityComponent {
   publishProject = '';
   commentDrafts: Record<string, string> = {};
   message = '';
+  senderSquadId = '';
   notice = '';
+  toggleProfileProject(id: string): void {
+    const current = this.expandedProjectIds();
+    this.expandedProjectIds.set(
+      current.includes(id) ? current.filter((x) => x !== id) : [...current, id],
+    );
+  }
   publish() {
     if (this.store.publish(this.publishSquad, this.publishProject, this.content)) {
       this.content = '';
@@ -104,12 +122,13 @@ export class CommunityComponent {
     this.commentDrafts[id] = '';
   }
   send() {
-    this.store.send(this.chatSquad(), this.message);
-    this.message = '';
+    if (this.store.send(this.chatSquad(), this.message, undefined, this.senderSquadId))
+      this.message = '';
   }
   contact() {
     const user = this.store.atlas.user();
-    if (user) this.store.send(this.chatSquad(), '', `${user.name} · ${user.email}`);
+    if (user)
+      this.store.send(this.chatSquad(), '', `${user.name} · ${user.email}`, this.senderSquadId);
   }
   reset() {
     this.search.set('');
