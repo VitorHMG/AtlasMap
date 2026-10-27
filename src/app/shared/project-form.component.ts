@@ -17,116 +17,115 @@ import { AtlasProject, AtlasStoreService } from '../core/atlas-store.service';
       <button
         class="icon-button modal-close"
         type="button"
-        aria-label="Fechar"
+        aria-label="Fechar formulário"
         (click)="cancel.emit()"
       >
         ×
       </button>
-      <p class="eyebrow">Projeto sustentável</p>
-      <h2 id="project-form-title">{{ project() ? 'Editar projeto' : 'Adicionar novo projeto' }}</h2>
+      <p class="eyebrow">Projeto do squad</p>
+      <h2 id="project-form-title">{{ project() ? 'Editar projeto' : 'Criar projeto' }}</h2>
       <form (ngSubmit)="submit()">
-        <label>
-          Nome do projeto
-          <input
-            name="name"
-            [(ngModel)]="name"
-            placeholder="Ex.: Horta urbana inteligente"
-            required
-          />
-        </label>
-        <label>
-          Responsável
-          <input
-            name="owner"
-            [(ngModel)]="owner"
-            placeholder="Nome da equipe ou responsável"
-            required
-          />
-        </label>
-        <label>
-          Descrição
-          <textarea
-            name="description"
-            [(ngModel)]="description"
-            placeholder="Descreva o impacto do projeto"
-            required
-          ></textarea>
-        </label>
-        <label
-          >Squad responsável
-          <select name="squad" [(ngModel)]="squadId">
-            <option value="">Projeto independente</option>
-            @for (s of community.squads; track s.id) {
-              @if (community.memberships().includes(s.id) || project()?.squadId === s.id) {
-                <option [value]="s.id">{{ s.name }}</option>
-              }
-            }
-          </select>
-        </label>
-        <label
-          >Tipo de código<select
-            name="visibility"
-            [(ngModel)]="visibility"
-            [disabled]="!selectedPlan1"
-          >
-            <option value="open">Open-source</option>
-            <option value="closed">Código fechado</option>
-          </select></label
+        <label for="project-name">Nome <span aria-hidden="true">*</span></label>
+        <input
+          id="project-name"
+          name="name"
+          [(ngModel)]="name"
+          placeholder="Ex.: Horta urbana inteligente"
+          required
+        />
+
+        <label for="project-description">Descrição <span aria-hidden="true">*</span></label>
+        <textarea
+          id="project-description"
+          name="description"
+          [(ngModel)]="description"
+          placeholder="Descreva o objetivo e impacto do projeto"
+          required
+        ></textarea>
+
+        <label for="project-location"
+          >Localização <span class="optional-label">(opcional)</span></label
         >
+        <input
+          id="project-location"
+          name="address"
+          [(ngModel)]="address"
+          placeholder="Cidade, estado ou endereço"
+          autocomplete="street-address"
+        />
+
+        <label for="project-tags">Tags <span aria-hidden="true">*</span></label>
+        <input
+          id="project-tags"
+          name="tags"
+          [(ngModel)]="tags"
+          placeholder="Ex.: Energia solar, Python, IoT"
+          required
+        />
+        <small>Separe as tags por vírgula.</small>
+
+        <label for="project-status">Status de desenvolvimento</label>
+        <select id="project-status" name="status" [(ngModel)]="status">
+          <option>Em pesquisa</option>
+          <option>Em desenvolvimento</option>
+          <option>Em operação</option>
+        </select>
+
+        <label for="project-squad">Squad responsável</label>
+        <input id="project-squad" [value]="selectedSquadName" readonly aria-readonly="true" />
+
+        <label for="project-visibility">Tipo de código</label>
+        <select
+          id="project-visibility"
+          name="visibility"
+          [(ngModel)]="visibility"
+          [disabled]="!selectedPlan1"
+        >
+          <option value="open">Open-source</option>
+          <option value="closed">Código fechado</option>
+        </select>
+
         @if (selectedPlan1) {
-          <label
+          <label class="check-option"
             ><input type="checkbox" name="featured" [(ngModel)]="featured" /> Destacar projeto no
             Discover</label
           >
-          <label
+          <label class="check-option"
             ><input type="checkbox" name="showOnMap" [(ngModel)]="showOnMap" /> Mostrar localização
             no mapa</label
           >
         } @else {
-          <p class="local-notice">
-            Destaque, código fechado e geolocalização no mapa exigem o Plano 1 do squad.
-          </p>
+          <p class="local-notice">Destaque, código fechado e exibição no mapa exigem o Plano 1.</p>
         }
-        <label
-          >Endereço<input
-            name="address"
-            [(ngModel)]="address"
-            placeholder="Cidade, estado ou endereço do projeto"
-        /></label>
-        <label
-          >Status de desenvolvimento<select name="status" [(ngModel)]="status">
-            <option>Em pesquisa</option>
-            <option>Em desenvolvimento</option>
-            <option>Em operação</option>
-          </select></label
-        >
-        <label
-          >Tags<input name="tags" [(ngModel)]="tags" placeholder="Ex.: Energia solar, Python, IoT"
-        /></label>
-        <div class="form-row">
-          <label>
-            Longitude
-            <input
-              name="longitude"
-              type="number"
-              step="any"
-              [(ngModel)]="longitude"
-              placeholder="-47.45"
-              required
-            />
-          </label>
-          <label>
-            Latitude
-            <input
-              name="latitude"
-              type="number"
-              step="any"
-              [(ngModel)]="latitude"
-              placeholder="-23.50"
-              required
-            />
-          </label>
-        </div>
+        @if (selectedPlan1 && showOnMap) {
+          <fieldset class="coordinate-fields">
+            <legend>Coordenadas do projeto <span aria-hidden="true">*</span></legend>
+            <div class="form-row">
+              <label for="project-longitude">Longitude</label>
+              <input
+                id="project-longitude"
+                name="longitude"
+                type="number"
+                step="any"
+                [(ngModel)]="longitude"
+                required
+              />
+              <label for="project-latitude">Latitude</label>
+              <input
+                id="project-latitude"
+                name="latitude"
+                type="number"
+                step="any"
+                [(ngModel)]="latitude"
+                required
+              />
+            </div>
+          </fieldset>
+        }
+
+        @if (error) {
+          <p class="form-error" role="alert">{{ error }}</p>
+        }
         <button class="primary-button full-button" type="submit">
           {{ project() ? 'Salvar alterações' : 'Cadastrar projeto' }}
         </button>
@@ -138,6 +137,7 @@ export class ProjectFormComponent {
   private readonly store = inject(AtlasStoreService);
   readonly community = inject(CommunityStoreService);
   readonly project = input<AtlasProject | null>(null);
+  readonly defaultSquadId = input<string | null>(null);
   readonly cancel = output<void>();
   readonly saved = output<AtlasProject>();
 
@@ -145,22 +145,27 @@ export class ProjectFormComponent {
   visibility: 'open' | 'closed' = 'open';
   featured = false;
   showOnMap = false;
-  get selectedPlan1(): boolean {
-    return this.community.squad(this.squadId)?.plan === 'plan1';
-  }
   address = '';
   status = 'Em pesquisa';
   tags = '';
   name = '';
-  owner = '';
   description = '';
   longitude: number | null = null;
   latitude: number | null = null;
+  error = '';
+
+  get selectedPlan1(): boolean {
+    return this.community.squad(this.squadId)?.plan === 'plan1';
+  }
+
+  get selectedSquadName(): string {
+    return this.community.squad(this.squadId)?.name ?? '';
+  }
 
   constructor() {
     effect(() => {
       const project = this.project();
-      this.squadId = project?.squadId ?? '';
+      this.squadId = project?.squadId ?? this.defaultSquadId() ?? '';
       this.visibility = project?.visibility ?? 'open';
       this.featured = project?.featured ?? false;
       this.showOnMap = project?.showOnMap ?? false;
@@ -168,35 +173,49 @@ export class ProjectFormComponent {
       this.status = project?.status ?? 'Em pesquisa';
       this.tags = project?.tags?.join(', ') ?? '';
       this.name = project?.name ?? '';
-      this.owner = project?.owner ?? this.store.user()?.name ?? '';
       this.description = project?.description ?? '';
       this.longitude = project?.coordinates[0] ?? null;
       this.latitude = project?.coordinates[1] ?? null;
+      this.error = '';
     });
   }
 
   submit(): void {
-    if (!this.name.trim() || !this.owner.trim() || !this.description.trim()) return;
-    if (this.longitude === null || this.latitude === null) return;
-    if (!this.selectedPlan1 && (this.visibility === 'closed' || this.featured || this.showOnMap))
+    const tags = this.tags
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+    if (!this.name.trim() || !this.description.trim() || !tags.length || !this.squadId) {
+      this.error = 'Preencha nome, descrição, tags e squad responsável.';
       return;
+    }
+    if (!this.selectedPlan1 && (this.visibility === 'closed' || this.featured || this.showOnMap)) {
+      this.error = 'Os recursos selecionados exigem o Plano 1.';
+      return;
+    }
+    if (this.showOnMap && (this.longitude === null || this.latitude === null)) {
+      this.error = 'Informe latitude e longitude para exibir o projeto no mapa.';
+      return;
+    }
+    const squad = this.community.squad(this.squadId);
+    if (!squad) {
+      this.error = 'Selecione um squad válido.';
+      return;
+    }
     const result = this.store.saveProject(
       {
-        squadId: this.squadId,
+        squadId: squad.id,
         visibility: this.visibility,
         featured: this.selectedPlan1 && this.featured,
         showOnMap: this.selectedPlan1 && this.showOnMap,
         address: this.address.trim(),
         status: this.status,
-        tags: this.tags
-          .split(',')
-          .map((t) => t.trim())
-          .filter(Boolean),
+        tags,
         name: this.name.trim(),
-        owner: this.owner.trim(),
+        owner: squad.name,
         description: this.description.trim(),
         image: this.project()?.image ?? 'assets/site/atlasmap.png',
-        coordinates: [Number(this.longitude), Number(this.latitude)],
+        coordinates: [this.longitude ?? 0, this.latitude ?? 0],
       },
       this.project()?.id,
     );

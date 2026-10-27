@@ -1,21 +1,18 @@
 import { AfterViewInit, Component, inject, OnDestroy, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { AtlasProject, AtlasStoreService } from '../../core/atlas-store.service';
+import { AtlasStoreService } from '../../core/atlas-store.service';
 import { AppHeaderComponent } from '../../shared/app-header.component';
 import { ProfileDrawerComponent } from '../../shared/profile-drawer.component';
-import { ProjectFormComponent } from '../../shared/project-form.component';
 
 @Component({
   selector: 'app-map',
-  imports: [AppHeaderComponent, ProfileDrawerComponent, ProjectFormComponent],
+  imports: [AppHeaderComponent, ProfileDrawerComponent],
   templateUrl: './map.component.html',
 })
 export class MapComponent implements AfterViewInit, OnDestroy {
   readonly store = inject(AtlasStoreService);
   private readonly route = inject(ActivatedRoute);
   readonly profileOpen = signal(false);
-  readonly formOpen = signal(false);
-  readonly editingProject = signal<AtlasProject | null>(null);
   readonly mapError = signal('');
   private map: any;
   private markerLayer: any;
@@ -45,53 +42,39 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     this.map?.remove();
   }
 
-  openCreate(): void {
-    this.editingProject.set(null);
-    this.formOpen.set(true);
-    this.profileOpen.set(false);
-  }
-
-  openEdit(project: AtlasProject): void {
-    this.editingProject.set(project);
-    this.formOpen.set(true);
-    this.profileOpen.set(false);
-  }
-
-  refresh(): void {
-    this.formOpen.set(false);
-    if ((window as any).L && this.map) this.renderProjects((window as any).L);
-  }
-
   private renderProjects(leaflet: any): void {
     this.markerLayer?.remove();
     this.markerLayer = leaflet.layerGroup().addTo(this.map);
-    this.store.projects().filter((project) => project.showOnMap).forEach((project) => {
-      const marker = leaflet.circleMarker([project.coordinates[1], project.coordinates[0]], {
-        radius: 9,
-        color: '#07150d',
-        weight: 3,
-        fillColor: '#53fa85',
-        fillOpacity: 1,
+    this.store
+      .projects()
+      .filter((project) => project.showOnMap)
+      .forEach((project) => {
+        const marker = leaflet.circleMarker([project.coordinates[1], project.coordinates[0]], {
+          radius: 9,
+          color: '#07150d',
+          weight: 3,
+          fillColor: '#53fa85',
+          fillOpacity: 1,
+        });
+        const content = document.createElement('div');
+        content.className = 'map-popup';
+        const title = document.createElement('strong');
+        title.textContent = project.name;
+        const description = document.createElement('p');
+        description.textContent = project.description;
+        const image = document.createElement('img');
+        image.src = project.image;
+        image.alt = project.name;
+        image.style.cssText =
+          'width:100%;height:110px;object-fit:cover;border-radius:5px;margin-bottom:10px';
+        const link = document.createElement('a');
+        link.href = new URL(`projeto/${encodeURIComponent(project.id)}`, document.baseURI).href;
+        link.textContent = 'Conhecer projeto →';
+        link.style.cssText = 'display:block;margin-top:12px;color:#137854;font-weight:bold';
+        content.append(image, title, description, link);
+        marker.bindPopup(content);
+        marker.addTo(this.markerLayer);
       });
-      const content = document.createElement('div');
-      content.className = 'map-popup';
-      const title = document.createElement('strong');
-      title.textContent = project.name;
-      const description = document.createElement('p');
-      description.textContent = project.description;
-      const image = document.createElement('img');
-      image.src = project.image;
-      image.alt = project.name;
-      image.style.cssText =
-        'width:100%;height:110px;object-fit:cover;border-radius:5px;margin-bottom:10px';
-      const link = document.createElement('a');
-      link.href = new URL(`projeto/${encodeURIComponent(project.id)}`, document.baseURI).href;
-      link.textContent = 'Conhecer projeto →';
-      link.style.cssText = 'display:block;margin-top:12px;color:#137854;font-weight:bold';
-      content.append(image, title, description, link);
-      marker.bindPopup(content);
-      marker.addTo(this.markerLayer);
-    });
   }
 
   private loadLeaflet(): Promise<any> {

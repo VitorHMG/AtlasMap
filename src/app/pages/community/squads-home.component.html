@@ -1,0 +1,27 @@
+<section class="panel squad-empty-state">
+  <p class="eyebrow">Seus squads</p>
+  <h1>Você não está em nenhum squad.</h1>
+  @for (squadId of store.invitations(); track squadId) {
+    @if (store.squad(squadId); as invite) {
+      <article class="squad-invitation">
+        <span>Você recebeu um convite para {{ invite.name }}.</span>
+        @if (!store.atlas.user()) {
+          <a class="text-button" routerLink="/login">Entre para aceitar o convite</a>
+        } @else if (store.canJoin(invite.id)) {
+          <button class="primary-button" type="button" (click)="acceptInvite(invite.id)">
+            Aceitar convite
+          </button>
+        } @else {
+          <small>Este squad ainda não tem projeto open-source para participação Freemium.</small>
+        }
+      </article>
+    }
+  } @empty {
+    <p>Quando um squad convidar você, poderá aceitar o convite nesta tela.</p>
+  }
+  @if (store.atlas.user()) {
+    <a class="primary-button" routerLink="/squad/novo">Criar meu squad</a>
+  } @else {
+    <a class="primary-button" routerLink="/cadastro">Criar conta e formar um squad</a>
+  }
+</section>

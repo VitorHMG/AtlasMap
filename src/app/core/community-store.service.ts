@@ -6,12 +6,15 @@ export interface Squad {
   name: string;
   description: string;
   city: string;
+  address?: string;
   image: string;
   members: string[];
   languages: string[];
   technologies: string[];
   areas: string[];
   plan: 'freemium' | 'plan1';
+  ownerEmail?: string;
+  ownerName?: string;
 }
 export interface Post {
   id: string;
@@ -34,7 +37,7 @@ export interface Message {
 @Injectable({ providedIn: 'root' })
 export class CommunityStoreService {
   readonly atlas = inject(AtlasStoreService);
-  readonly squads: Squad[] = [
+  private readonly builtInSquads: Squad[] = [
     {
       id: 'atlas',
       name: 'Squad Atlas',
@@ -62,6 +65,10 @@ export class CommunityStoreService {
       plan: 'freemium',
     },
   ];
+  readonly createdSquads = signal<Squad[]>(this.read('atlas-squads', []));
+  get squads(): Squad[] {
+    return [...this.builtInSquads, ...this.createdSquads()];
+  }
   readonly projects = computed(() =>
     this.atlas.projects().map((p) => ({
       ...p,
@@ -167,8 +174,37 @@ export class CommunityStoreService {
     ]),
   );
   readonly memberships = signal<string[]>(this.read('atlas-memberships', []));
+  readonly invitations = signal<string[]>(this.read('atlas-invitations', []));
+  readonly lastSquadId = signal<string | null>(this.read('atlas-last-squad', null));
   squad(id: string) {
     return this.squads.find((s) => s.id === id);
+  }
+  createSquad(input: { name: string; description: string; address: string }): Squad | null {
+    const user = this.atlas.user();
+    if (!user || !input.name.trim() || !input.description.trim()) return null;
+    const squad: Squad = {
+      id: `squad-${crypto.randomUUID()}`,
+      name: input.name.trim(),
+      description: input.description.trim(),
+      city: input.address.trim() || 'Endereço não informado',
+      address: input.address.trim(),
+      image: 'assets/site/atlasmap.png',
+      members: [user.name],
+      languages: [],
+      technologies: [],
+      areas: [],
+      plan: 'freemium',
+      ownerEmail: user.email,
+      ownerName: user.name,
+    };
+    const squads = [...this.createdSquads(), squad];
+    this.createdSquads.set(squads);
+    this.write('atlas-squads', squads);
+    const memberships = [...new Set([...this.memberships(), squad.id])];
+    this.memberships.set(memberships);
+    this.write('atlas-memberships', memberships);
+    this.interactWithSquad(squad.id);
+    return squad;
   }
   canJoin(id: string): boolean {
     const squad = this.squad(id);
@@ -180,6 +216,24 @@ export class CommunityStoreService {
   }
   isPaidMember(id: string): boolean {
     return this.memberships().includes(id) && this.squad(id)?.plan === 'plan1';
+  }
+  interactWithSquad(id: string): void {
+    if (!this.squad(id)) return;
+    this.lastSquadId.set(id);
+    this.write('atlas-last-squad', id);
+  }
+  acceptInvite(id: string): boolean {
+    if (!this.atlas.user() || !this.invitations().includes(id) || !this.canJoin(id)) return false;
+    if (!this.memberships().includes(id)) {
+      const next = [...this.memberships(), id];
+      this.memberships.set(next);
+      this.write('atlas-memberships', next);
+    }
+    const nextInvitations = this.invitations().filter((squadId) => squadId !== id);
+    this.invitations.set(nextInvitations);
+    this.write('atlas-invitations', nextInvitations);
+    this.interactWithSquad(id);
+    return true;
   }
   join(id: string): boolean {
     if (!this.atlas.user()) return false;

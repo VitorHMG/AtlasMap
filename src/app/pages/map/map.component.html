@@ -1,26 +1,15 @@
 <div class="app-shell map-shell">
-  <app-header (openProfile)="profileOpen.set(true)" (addProject)="openCreate()" />
+  <app-header (openProfile)="profileOpen.set(true)" />
   <main class="map-main">
     <div id="atlas-map" aria-label="Mapa interativo de projetos"></div>
     <div class="map-overlay">
       <p class="eyebrow">Mapeamento</p>
       <h1>Projetos pelo Brasil</h1>
       <p>Selecione os pontos para conhecer cada iniciativa.</p>
-      <button class="primary-button" type="button" (click)="openCreate()">Adicionar projeto</button>
     </div>
-    @if (mapError()) { <p class="map-error">{{ mapError() }}</p> }
+    @if (mapError()) {
+      <p class="map-error">{{ mapError() }}</p>
+    }
   </main>
-  <app-profile-drawer
-    [open]="profileOpen()"
-    (close)="profileOpen.set(false)"
-    (add)="openCreate()"
-    (edit)="openEdit($event)"
-  />
-  @if (formOpen()) {
-    <app-project-form
-      [project]="editingProject()"
-      (cancel)="formOpen.set(false)"
-      (saved)="refresh()"
-    />
-  }
+  <app-profile-drawer [open]="profileOpen()" (close)="profileOpen.set(false)" />
 </div>

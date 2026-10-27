@@ -1,0 +1,14 @@
+<div class="app-shell community-shell">
+  <app-header (openProfile)="profileOpen.set(true)" />
+  <main class="community-main">
+    <div class="workspace-label">
+      <span class="live-dot"></span> CONECTANDO PESSOAS, PROJETOS E IMPACTO
+      <span>Comunidade AtlasMap</span>
+    </div>
+    <router-outlet />
+  </main>
+  @if (showChatDock()) {
+    <app-community-chat-dock />
+  }
+  <app-profile-drawer [open]="profileOpen()" (close)="profileOpen.set(false)" />
+</div>

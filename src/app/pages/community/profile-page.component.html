@@ -1,0 +1,142 @@
+@if (store.atlas.user(); as user) {
+        <section class="profile-banner">
+          <span class="big-avatar">{{ user.name.slice(0, 1).toUpperCase() }}</span>
+          <div>
+            <p class="eyebrow">Meu perfil</p>
+            <h1>{{ user.name }}</h1>
+            <p class="profile-email">{{ user.email }}</p>
+            <p class="profile-meta">
+              {{ user.accountType === 'company' ? 'Empresa' : 'Desenvolvedor(a)' }}
+              <span aria-hidden="true">·</span>
+              {{ user.birthDate ? (user.birthDate | date: 'dd/MM/yyyy') : 'Data de nascimento não informada' }}
+            </p>
+            <p class="profile-counts">{{ joined().length }} squads <span aria-hidden="true">·</span> {{ profileProjects().length }} projetos</p>
+            <div class="profile-actions">
+              <button class="text-button" type="button" (click)="startEdit()">Editar perfil</button>
+              <button class="text-button" type="button" (click)="logout()">Sair da conta</button>
+            </div>
+          </div>
+        </section>
+        @if (editOpen()) {
+          <form class="panel profile-edit-form" (ngSubmit)="saveProfile()">
+            <h2>Editar perfil</h2>
+            <label for="profile-name">Nome real</label>
+            <input id="profile-name" name="name" [(ngModel)]="name" autocomplete="name" required />
+            <label for="profile-email">E-mail</label>
+            <input id="profile-email" name="email" type="email" [(ngModel)]="email" autocomplete="email" required />
+            <label for="profile-type">Você é dev ou empresa?</label>
+            <select id="profile-type" name="accountType" [(ngModel)]="accountType">
+              <option value="developer">Desenvolvedor(a)</option>
+              <option value="company">Empresa</option>
+            </select>
+            <label for="profile-birthdate">Data de nascimento</label>
+            <input id="profile-birthdate" name="birthDate" type="date" [(ngModel)]="birthDate" />
+            <button class="primary-button" type="submit">Salvar perfil</button>
+            <button class="text-button" type="button" (click)="editOpen.set(false)">Cancelar</button>
+          </form>
+        }
+        <div class="entity-layout">
+          <aside>
+            <section class="panel">
+              <h2>Linguagens</h2>
+              <div class="tag-list">
+                @for (t of languages(); track t) {
+                  <span>{{ t }}</span>
+                } @empty {
+                  <p>Participe de um squad para agregar competências.</p>
+                }
+              </div>
+              <h2>Tecnologias</h2>
+              <div class="tag-list">
+                @for (t of technologies(); track t) {
+                  <span>{{ t }}</span>
+                }
+              </div>
+              <h2>Áreas de atuação</h2>
+              <div class="tag-list">
+                @for (t of areas(); track t) {
+                  <span>{{ t }}</span>
+                }
+              </div>
+            </section>
+          </aside>
+          <section>
+            <h2 class="section-title">Meus squads</h2>
+            <div class="mini-projects">
+              @for (s of joined(); track s.id) {
+                <a [routerLink]="['/squad', s.id]" class="panel"
+                  ><h3>{{ s.name }}</h3>
+                  <p>{{ s.description }}</p></a
+                >
+              } @empty {
+                <div class="panel">
+                  <p>Você ainda não participa de um squad.</p>
+                  <a routerLink="/squad/novo" class="text-button">Criar meu squad →</a>
+                </div>
+              }
+            </div>
+            <h2 class="section-title">Histórico de projetos</h2>
+            @for (p of profileProjects(); track p.id) {
+              <div class="panel profile-project-row">
+                <button
+                  type="button"
+                  class="text-button"
+                  [attr.aria-expanded]="expandedProjectIds().includes(p.id)"
+                  (click)="toggleProject(p.id)"
+                >
+                  {{ expandedProjectIds().includes(p.id) ? '⌄' : '›' }} {{ p.name }}
+                </button>
+                @if (expandedProjectIds().includes(p.id)) {
+                  <a class="history-row" [routerLink]="['/projeto', p.id]"
+                    ><img [src]="p.image" [alt]="p.name" />
+                    <div>
+                      <p>{{ p.status }} · {{ p.city }}</p>
+                      <small>{{
+                        p.visibility === 'open' ? 'Open-source' : 'Código fechado'
+                      }}</small>
+                    </div>
+                    <span>↗</span></a
+                  >
+                }
+              </div>
+            } @empty {
+              <p class="empty-state">
+                Seus projetos e os projetos dos seus squads aparecerão aqui.
+              </p>
+            }
+            <h2 class="section-title">Meus projetos cadastrados</h2>
+            @for (p of store.atlas.createdProjects(); track p.id) {
+              @if (p.owner === user.name) {
+                <div class="panel history-row">
+                  <a [routerLink]="['/projeto', p.id]">{{ p.name }}</a>
+                </div>
+              }
+            }
+            <h2 class="section-title">Projetos salvos</h2>
+            @for (p of store.atlas.likedProjects(); track p.id) {
+              <a class="panel history-row" [routerLink]="['/projeto', p.id]">{{ p.name }} ↗</a>
+            } @empty {
+              <p class="empty-state">Salve projetos no Discover para encontrá-los aqui.</p>
+            }
+            <h2 class="section-title">Timeline dos meus squads</h2>
+            @for (post of profilePosts(); track post.id) {
+              <article class="panel timeline-item">
+                <small
+                  >{{ post.date | date: 'dd/MM/yyyy' }} ·
+                  {{ store.squad(post.squadId)?.name }}</small
+                >
+                <p>{{ post.content }}</p>
+                <a [routerLink]="['/projeto', post.projectId]" class="text-button">Ver projeto →</a>
+              </article>
+            } @empty {
+              <p class="empty-state">Nenhuma atividade dos seus squads ainda.</p>
+            }
+          </section>
+        </div>
+      } @else {
+        <section class="panel signed-out-state">
+          <h1>Seu impacto começa por aqui.</h1>
+          <p>Entre para acompanhar seus squads, projetos e competências.</p>
+          <a routerLink="/login" class="primary-button">Entrar ou criar conta</a>
+        </section>
+      }

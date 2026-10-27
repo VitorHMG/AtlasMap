@@ -1,6 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AtlasStoreService } from '../../core/atlas-store.service';
 
 @Component({
@@ -11,35 +11,19 @@ import { AtlasStoreService } from '../../core/atlas-store.service';
 export class AuthComponent {
   private readonly store = inject(AtlasStoreService);
   private readonly router = inject(Router);
-  readonly mode = signal<'login' | 'register'>('login');
-  readonly message = signal('');
+  private readonly route = inject(ActivatedRoute);
 
-  name = '';
   email = '';
-  phone = '';
   password = '';
 
   submit(): void {
     if (!this.email.trim() || !this.password.trim()) return;
-    if (this.mode() === 'register') {
-      if (!this.name.trim() || !this.phone.trim()) return;
-      this.store.register(this.name.trim(), this.email.trim());
-      this.message.set('Cadastro concluído. Agora entre com suas credenciais.');
-      this.mode.set('login');
-      this.password = '';
-      return;
-    }
     this.store.login(this.email.trim());
-    void this.router.navigate(['/projetos']);
+    void this.router.navigateByUrl(this.route.snapshot.queryParamMap.get('returnUrl') || '/squads');
   }
 
   social(provider: string): void {
     this.store.login(`${provider.toLowerCase()}@atlasmap.com`);
-    void this.router.navigate(['/projetos']);
-  }
-
-  changeMode(mode: 'login' | 'register'): void {
-    this.mode.set(mode);
-    this.message.set('');
+    void this.router.navigate(['/squads']);
   }
 }

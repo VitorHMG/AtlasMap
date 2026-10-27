@@ -3,6 +3,8 @@ import { computed, Injectable, signal } from '@angular/core';
 export interface AtlasUser {
   name: string;
   email: string;
+  accountType?: 'developer' | 'company';
+  birthDate?: string;
 }
 
 export interface AtlasProject {
@@ -61,6 +63,7 @@ const BUILT_IN_PROJECTS: AtlasProject[] = [
 @Injectable({ providedIn: 'root' })
 export class AtlasStoreService {
   private readonly userKey = 'atlasmap-auth-user';
+  private readonly userProfilesKey = 'atlasmap-user-profiles';
   private readonly projectsKey = 'atlasmap-projects';
   private readonly likesKey = 'atlasmap-liked-projects';
 
@@ -77,16 +80,43 @@ export class AtlasStoreService {
 
   login(email: string): void {
     const saved = this.user();
+    const normalizedEmail = email.trim().toLocaleLowerCase('pt-BR');
+    const registered = this.read<AtlasUser[]>(this.userProfilesKey, []).find(
+      (profile) => profile.email.toLocaleLowerCase('pt-BR') === normalizedEmail,
+    );
     const user =
-      saved?.email === email ? saved : { name: email.split('@')[0] || 'Usuário AtlasMap', email };
+      registered ??
+      (saved?.email.toLocaleLowerCase('pt-BR') === normalizedEmail
+        ? saved
+        : { name: email.split('@')[0] || 'Usuário AtlasMap', email: email.trim() });
     this.user.set(user);
     this.write(this.userKey, user);
   }
 
-  register(name: string, email: string): void {
-    const user = { name, email };
+  register(
+    name: string,
+    email: string,
+    details: Pick<AtlasUser, 'accountType' | 'birthDate'> = {},
+  ): void {
+    const user: AtlasUser = { name, email, ...details };
     this.user.set(user);
     this.write(this.userKey, user);
+    this.saveUserProfile(user);
+  }
+
+  updateProfile(details: AtlasUser): void {
+    this.user.set(details);
+    this.write(this.userKey, details);
+    this.saveUserProfile(details);
+  }
+
+  private saveUserProfile(user: AtlasUser): void {
+    const profiles = this.read<AtlasUser[]>(this.userProfilesKey, []);
+    const next = profiles.filter(
+      (profile) =>
+        profile.email.toLocaleLowerCase('pt-BR') !== user.email.toLocaleLowerCase('pt-BR'),
+    );
+    this.write(this.userProfilesKey, [...next, user]);
   }
 
   logout(): void {
@@ -106,7 +136,11 @@ export class AtlasStoreService {
     return this.likedIds().includes(id);
   }
 
-  saveProject(project: Omit<AtlasProject, 'id' | 'userCreated'>, id?: string): AtlasProject {
+  saveProject(
+    project: Omit<AtlasProject, 'id' | 'userCreated' | 'squadId'> & { squadId: string },
+    id?: string,
+  ): AtlasProject {
+    if (!project.squadId) throw new Error('Todo projeto deve pertencer a um squad.');
     const saved: AtlasProject = {
       ...project,
       id: id ?? `project-${Date.now()}`,

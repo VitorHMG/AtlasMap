@@ -1,8 +1,11 @@
 <div class="app-shell">
-  <app-header (openProfile)="profileOpen.set(true)" (addProject)="openCreate()" />
+  <app-header (openProfile)="profileOpen.set(true)" />
   <main class="projects-main">
     <div class="projects-heading">
-      <div><p class="eyebrow">Iniciativas sustentáveis</p><h1>Explore os projetos</h1></div>
+      <div>
+        <p class="eyebrow">Iniciativas sustentáveis</p>
+        <h1>Explore os projetos</h1>
+      </div>
       <p>Selecione um card para ver mais detalhes ou use o coração para salvar um favorito.</p>
     </div>
     <section class="projects-grid" aria-label="Projetos">
@@ -18,9 +21,13 @@
               class="like-button"
               [class.liked]="store.isLiked(project.id)"
               type="button"
-              [attr.aria-label]="store.isLiked(project.id) ? 'Remover dos favoritos' : 'Curtir projeto'"
+              [attr.aria-label]="
+                store.isLiked(project.id) ? 'Remover dos favoritos' : 'Curtir projeto'
+              "
               (click)="$event.stopPropagation(); store.toggleLike(project.id)"
-            >♥</button>
+            >
+              ♥
+            </button>
           </div>
           <div class="project-content">
             <small>{{ project.owner }}</small>
@@ -30,9 +37,6 @@
               <div class="project-details">
                 <span>Localização</span>
                 <strong>{{ project.coordinates[1] }}, {{ project.coordinates[0] }}</strong>
-                @if (project.userCreated) {
-                  <button type="button" (click)="$event.stopPropagation(); openEdit(project)">Editar projeto</button>
-                }
               </div>
             }
           </div>
@@ -41,17 +45,5 @@
     </section>
   </main>
 
-  <app-profile-drawer
-    [open]="profileOpen()"
-    (close)="profileOpen.set(false)"
-    (add)="openCreate()"
-    (edit)="openEdit($event)"
-  />
-  @if (formOpen()) {
-    <app-project-form
-      [project]="editingProject()"
-      (cancel)="formOpen.set(false)"
-      (saved)="formOpen.set(false)"
-    />
-  }
+  <app-profile-drawer [open]="profileOpen()" (close)="profileOpen.set(false)" />
 </div>

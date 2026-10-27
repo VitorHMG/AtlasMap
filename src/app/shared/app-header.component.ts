@@ -13,16 +13,21 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
       <a routerLink="/feed" routerLinkActive="active">Feed</a>
       <a routerLink="/discover" routerLinkActive="active">Discover</a>
       <a routerLink="/mapa" routerLinkActive="active">Mapeamento</a>
-      <a routerLink="/squad/atlas" routerLinkActive="active">Squad</a>
+      <a routerLink="/squads" routerLinkActive="active">Squad</a>
       <a routerLink="/chat" routerLinkActive="active">Chat</a>
     </nav>
     <div class="header-actions">
-      <button class="new-project-button" (click)="addProject.emit()">+ Projeto</button
-      ><a class="profile-trigger" routerLink="/perfil" aria-label="Meu perfil">●</a>
+      <button
+        class="profile-trigger"
+        type="button"
+        (click)="openProfile.emit()"
+        aria-label="Abrir perfil e squads"
+      >
+        ●
+      </button>
     </div>
   </header>`,
 })
 export class AppHeaderComponent {
   readonly openProfile = output<void>();
-  readonly addProject = output<void>();
 }

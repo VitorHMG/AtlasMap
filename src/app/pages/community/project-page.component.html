@@ -1,0 +1,72 @@
+@if (project(); as p) {
+  <a routerLink="/discover" class="back-link">← Voltar para Discover</a>
+  <section class="project-hero">
+    <img [src]="p.image" [alt]="p.name" />
+    <div>
+      <p class="eyebrow">{{ store.squad(p.squadId)?.name || p.owner }}</p>
+      <h1>{{ p.name }}</h1>
+      <p>{{ p.description }}</p>
+      <div class="tag-list">
+        @for (t of p.tags; track t) {
+          <span>{{ t }}</span>
+        }
+      </div>
+      <button class="primary-button" (click)="store.atlas.toggleLike(p.id)">
+        {{ store.atlas.isLiked(p.id) ? '♥ Projeto salvo' : '♡ Salvar projeto' }}
+      </button>
+    </div>
+  </section>
+  <div class="project-info-grid">
+    <section class="panel">
+      <p class="eyebrow">Sobre a iniciativa</p>
+      <h2>Detalhes do projeto</h2>
+      <p>{{ p.description }}</p>
+      <p>Responsável: {{ p.owner }}</p>
+      @if (p.squadId) {
+        <a [routerLink]="['/squad', p.squadId]" class="text-button">Conhecer o squad →</a>
+      }
+    </section>
+    <section class="panel">
+      <p class="eyebrow">Onde acontece</p>
+      <h2>Endereço</h2>
+      <p>{{ p.address }}</p>
+      @if (p.showOnMap) {
+        <small>Latitude {{ p.coordinates[1] }} · Longitude {{ p.coordinates[0] }}</small>
+        <a routerLink="/mapa" [queryParams]="{ projeto: p.id }" class="secondary-button full-button"
+          >Ver no mapa ↗</a
+        >
+      } @else {
+        <p class="local-notice">A localização no mapa está disponível para squads do Plano 1.</p>
+      }
+    </section>
+    <section class="panel">
+      <p class="eyebrow">Acompanhe a evolução</p>
+      <h2>{{ p.status }}</h2>
+      <div class="progress-track">
+        <span
+          [style.width]="
+            p.status === 'Em operação' ? '100%' : p.status === 'Em pesquisa' ? '20%' : '60%'
+          "
+        ></span>
+      </div>
+      <small>Etapa atual de desenvolvimento</small>
+    </section>
+    <section class="panel update-card">
+      <p class="eyebrow">Última atualização</p>
+      <h2>{{ p.updated ? (p.updated | date: 'dd/MM/yyyy') : 'Ainda não informada' }}</h2>
+      <p>
+        {{
+          p.updated
+            ? 'Dados do projeto atualizados nesta data.'
+            : 'Aguardando uma atualização do responsável.'
+        }}
+      </p>
+      <a routerLink="/feed" class="text-button">Ver publicações dos squads →</a>
+    </section>
+  </div>
+} @else {
+  <div class="panel">
+    <h1>Projeto não encontrado</h1>
+    <a routerLink="/discover">Voltar para os projetos</a>
+  </div>
+}

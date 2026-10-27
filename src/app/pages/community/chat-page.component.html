@@ -1,0 +1,90 @@
+<section class="community-heading compact">
+        <div>
+          <p class="eyebrow">Conversas que conectam</p>
+          <h1>Mensagens<span>.</span></h1>
+          <p>Troque ideias e compartilhe seu contato com os squads.</p>
+        </div>
+      </section>
+      <p class="local-notice">
+        Prévia local: as mensagens ficam neste navegador e não são entregues a outros usuários.
+      </p>
+      <div class="chat-layout panel">
+        <aside class="conversation-list">
+          <h2>Conversas</h2>
+          @for (s of store.squads; track s.id) {
+            <button
+              class="conversation-option"
+              [class.active]="chatSquad() === s.id"
+              (click)="chatSquad.set(s.id)"
+            >
+              <span class="round-avatar">{{ s.name.slice(6, 7) }}</span
+              ><span
+                ><strong>{{ s.name }}</strong
+                ><small>{{ s.city }}</small></span
+              >
+            </button>
+          }
+        </aside>
+        <section class="chat-conversation">
+          <div class="chat-heading">
+            <span class="round-avatar">{{ store.squad(chatSquad())?.name?.slice(6, 7) }}</span>
+            <div>
+              <strong>{{ store.squad(chatSquad())?.name }}</strong
+              ><small>Conversa com o squad</small>
+            </div>
+            <a [routerLink]="['/squad', chatSquad()]">Ver squad ↗</a>
+          </div>
+          <div class="message-list" aria-live="polite">
+            @for (m of conversation(); track m.id) {
+              <div class="message" [class.sent]="m.sent">
+                @if (m.contact) {
+                  <small>CARD DE CONTATO</small><strong>{{ m.contact }}</strong>
+                } @else {
+                  <p>{{ m.text }}</p>
+                }
+                <small>{{
+                  m.sent
+                    ? (store.squad(m.senderSquadId ?? '')?.name ?? 'Squad') + ' · Salvo localmente'
+                    : store.squad(m.senderSquadId ?? m.squadId)?.name
+                }}</small>
+              </div>
+            } @empty {
+              <p class="empty-state">Comece uma conversa com este squad.</p>
+            }
+          </div>
+          @if (store.atlas.user() && paidSquads().length) {
+            <form class="message-form" (ngSubmit)="send()">
+              <label
+                >Enviar como<select name="senderSquad" [(ngModel)]="senderSquadId">
+                  <option value="">Selecione seu squad pago</option>
+                  @for (s of paidSquads(); track s.id) {
+                    <option [value]="s.id">{{ s.name }}</option>
+                  }
+                </select></label
+              >
+              <button
+                type="button"
+                class="secondary-button"
+                [disabled]="!senderSquadId"
+                (click)="contact()"
+                title="Enviar meu card de contato"
+              >
+                Contato +</button
+              ><input
+                name="message"
+                [(ngModel)]="message"
+                placeholder="Escreva uma mensagem…"
+                aria-label="Mensagem"
+              /><button class="primary-button" [disabled]="!message.trim() || !senderSquadId">
+                Enviar ↗
+              </button>
+            </form>
+          } @else if (store.atlas.user()) {
+            <p class="local-notice">Para conversar, participe de um squad no Plano 1.</p>
+          } @else {
+            <div class="panel">
+              <a routerLink="/login" class="text-button">Entre para conversar com os squads.</a>
+            </div>
+          }
+        </section>
+      </div>

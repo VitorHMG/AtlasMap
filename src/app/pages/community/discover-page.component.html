@@ -1,0 +1,101 @@
+<section class="community-heading">
+  <div>
+    <p class="eyebrow">Explore possibilidades</p>
+    <h1>Grandes ideias.<br /><span>Impacto de verdade.</span></h1>
+    <p>Descubra projetos, encontre seu squad e faça parte da transformação.</p>
+  </div>
+  <a routerLink="/mapa" class="secondary-button">Explorar no mapa ↗</a>
+</section>
+<div class="discovery-layout">
+  <aside class="filter-panel panel">
+    <div class="panel-title">
+      <h2>Filtrar projetos</h2>
+      <button class="text-button" (click)="reset()">Limpar</button>
+    </div>
+    <label
+      >Buscar<input
+        placeholder="Nome, descrição ou squad"
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event)" /></label
+    ><label
+      >Área ou tecnologia<select [ngModel]="tag()" (ngModelChange)="tag.set($event)">
+        <option value="">Todas as tags</option>
+        @for (item of tags(); track item) {
+          <option>{{ item }}</option>
+        }
+      </select></label
+    ><label
+      >Desenvolvimento<select [ngModel]="status()" (ngModelChange)="status.set($event)">
+        <option value="">Todos os status</option>
+        <option>Em pesquisa</option>
+        <option>Em desenvolvimento</option>
+        <option>Em operação</option>
+      </select></label
+    ><label
+      >Localização<select [ngModel]="city()" (ngModelChange)="city.set($event)">
+        <option value="">Todas as cidades</option>
+        @for (item of cities(); track item) {
+          <option>{{ item }}</option>
+        }
+      </select></label
+    >
+    <div class="filter-note">
+      Ideias locais.<br />Transformações globais.<span
+        >Explore iniciativas que unem tecnologia e sustentabilidade.</span
+      >
+    </div>
+  </aside>
+  <section>
+    <div class="results-heading">
+      <h2>
+        Projetos para descobrir <small>{{ filteredProjects().length }}</small>
+      </h2>
+      <span>Uma comunidade de possibilidades</span>
+    </div>
+    <div class="discovery-grid">
+      @for (p of filteredProjects(); track p.id) {
+        <article class="discovery-card">
+          <a [routerLink]="['/projeto', p.id]" class="card-photo"
+            ><img [src]="p.image" [alt]="p.name" /><span class="status-pill">{{ p.status }}</span>
+            @if (p.featured) {
+              <span class="featured-pill">Destaque</span>
+            }
+          </a>
+          <div class="card-body">
+            <a [routerLink]="['/squad', p.squadId]" class="squad-caption">{{
+              store.squad(p.squadId)?.name || p.owner
+            }}</a
+            ><a [routerLink]="['/projeto', p.id]"
+              ><h2>{{ p.name }}</h2></a
+            >
+            <p>{{ p.description }}</p>
+            <div class="tag-list">
+              <span>{{ p.visibility === 'open' ? 'Open-source' : 'Código fechado' }}</span>
+              @for (t of p.tags; track t) {
+                <button (click)="tag.set(t)">{{ t }}</button>
+              }
+            </div>
+            <div class="card-footer">
+              <span>⌖ {{ p.city }}</span
+              ><button
+                class="save-button"
+                [class.saved]="store.atlas.isLiked(p.id)"
+                (click)="store.atlas.toggleLike(p.id)"
+                [attr.aria-label]="
+                  store.atlas.isLiked(p.id) ? 'Remover dos salvos' : 'Salvar projeto'
+                "
+              >
+                {{ store.atlas.isLiked(p.id) ? '♥' : '♡' }}
+              </button>
+            </div>
+          </div>
+        </article>
+      } @empty {
+        <div class="panel empty-state">
+          Nenhum projeto corresponde aos filtros.
+          <button class="text-button" (click)="reset()">Limpar filtros</button>
+        </div>
+      }
+    </div>
+  </section>
+</div>

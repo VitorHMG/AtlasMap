@@ -1,0 +1,55 @@
+<main class="form-page">
+  <a class="back-link" routerLink="/squads">← Voltar para squads</a>
+  <section class="form-card panel">
+    @if (community.atlas.user()) {
+      <p class="eyebrow">Uma equipe, um propósito</p>
+      <h1>Crie seu squad</h1>
+      <p class="form-intro">
+        Cadastre sua equipe. O squad começa no plano Freemium e pode evoluir depois.
+      </p>
+      <form (ngSubmit)="create()">
+        <label for="squad-name">Nome do squad</label>
+        <input
+          id="squad-name"
+          name="name"
+          [(ngModel)]="name"
+          placeholder="Ex.: Guardiões da Mata"
+          required
+          autocomplete="organization"
+        />
+
+        <label for="squad-description">O que o squad quer transformar?</label>
+        <textarea
+          id="squad-description"
+          name="description"
+          [(ngModel)]="description"
+          rows="4"
+          placeholder="Conte sobre o propósito e as iniciativas da equipe."
+          required
+        ></textarea>
+
+        <label for="squad-address"
+          >Endereço do squad
+          <span class="optional-label">(opcional, caso tenha uma sede)</span></label
+        >
+        <input
+          id="squad-address"
+          name="address"
+          [(ngModel)]="address"
+          placeholder="Rua, cidade e estado"
+          autocomplete="street-address"
+        />
+        @if (error()) {
+          <p class="form-error" role="alert">{{ error() }}</p>
+        }
+        <button class="primary-button full-button" type="submit">Criar squad e continuar</button>
+      </form>
+    } @else {
+      <p class="eyebrow">Primeiro, sua conta</p>
+      <h1>Entre para criar um squad</h1>
+      <p class="form-intro">O squad fica associado à conta que o criou.</p>
+      <a class="primary-button full-button" routerLink="/cadastro">Criar minha conta</a>
+      <a class="secondary-button full-button" routerLink="/login">Já tenho uma conta</a>
+    }
+  </section>
+</main>

@@ -1,0 +1,117 @@
+@if (squad(); as s) {
+  <section
+    class="entity-cover"
+    [style.background-image]="
+      'linear-gradient(90deg, rgba(9,34,25,.95), rgba(9,34,25,.35)), url(' + s.image + ')'
+    "
+  >
+    <p class="eyebrow">Pessoas que transformam</p>
+    <h1>{{ s.name }}</h1>
+    <p>{{ s.description }}</p>
+    <span>⌖ {{ s.city }} · {{ s.members.length }} membros · Desde 2024</span>
+  </section>
+  <div class="entity-layout">
+    <aside>
+      <section class="panel">
+        <h2>Sobre o squad</h2>
+        <p>{{ s.description }}</p>
+        <div class="tag-list">
+          @for (t of s.areas; track t) {
+            <span>{{ t }}</span>
+          }
+        </div>
+        @if (store.atlas.user()) {
+          <p class="eyebrow">
+            {{
+              s.plan === 'plan1'
+                ? 'Plano 1 · projetos fechados, destaque e mapa'
+                : 'Freemium · participação em squads com projetos open-source'
+            }}
+          </p>
+          @if (store.memberships().includes(s.id) || store.canJoin(s.id)) {
+            <button class="primary-button full-button" (click)="store.join(s.id)">
+              {{ store.memberships().includes(s.id) ? 'Sair do squad' : 'Participar do squad' }}
+            </button>
+          } @else {
+            <p class="local-notice">
+              Este squad ainda não tem projeto open-source para participação Freemium.
+            </p>
+          }
+        } @else {
+          <a routerLink="/login" class="primary-button full-button">Entrar para participar</a>
+        }
+        @if (store.isPaidMember(s.id)) {
+          <a routerLink="/chat" class="secondary-button full-button">Conversar com o squad</a>
+        } @else {
+          <p class="local-notice">Conversas entre squads estão disponíveis no Plano 1.</p>
+        }
+      </section>
+      <section class="panel">
+        <h2>Membros</h2>
+        @for (member of s.members; track member) {
+          <div class="member-row">
+            <span class="round-avatar">{{ member.slice(0, 1) }}</span>
+            <div>
+              <strong>{{ member }}</strong
+              ><small>Membro do squad</small>
+            </div>
+          </div>
+        }
+        @if (store.memberships().includes(s.id) && store.atlas.user(); as user) {
+          <div class="member-row">
+            <span class="round-avatar">{{ user.name.slice(0, 1) }}</span
+            ><strong>{{ user.name }} (você)</strong>
+          </div>
+        }
+      </section>
+      <section class="panel">
+        <h2>Redes e contato</h2>
+        <p>O squad ainda não cadastrou suas redes sociais.</p>
+        <a routerLink="/chat" class="text-button">Abrir conversa →</a>
+      </section>
+    </aside>
+    <section>
+      <div class="squad-projects-heading">
+        <h2 class="section-title">Projetos do squad</h2>
+      @if (store.memberships().includes(s.id)) {
+        <button class="primary-button" type="button" (click)="openCreate()">
+          + Adicionar projeto
+        </button>
+      }
+      </div>
+      <div class="mini-projects">
+        @for (p of store.projects(); track p.id) {
+          @if (p.squadId === s.id) {
+            <a [routerLink]="['/projeto', p.id]" class="panel mini-project"
+              ><img [src]="p.image" [alt]="p.name" />
+              <div>
+                <small
+                  >{{ p.status }} ·
+                  {{ p.visibility === 'open' ? 'Open-source' : 'Código fechado' }}</small
+                >
+                <h3>{{ p.name }}</h3>
+                <p>{{ p.description }}</p>
+              </div></a
+            >
+          }
+        }
+      </div>
+    </section>
+  </div>
+} @else {
+  <div class="panel">
+    <h1>Squad não encontrado</h1>
+    <a routerLink="/discover">Explorar projetos</a>
+  </div>
+}
+@if (squad(); as currentSquad) {
+  <app-community-feed [squadId]="currentSquad.id" />
+  @if (formOpen()) {
+    <app-project-form
+      [project]="editingProject()"
+      [defaultSquadId]="currentSquad.id"
+      (cancel)="formOpen.set(false)"
+      (saved)="formOpen.set(false)"
+    />
+  }
+}

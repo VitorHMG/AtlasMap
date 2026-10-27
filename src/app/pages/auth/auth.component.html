@@ -4,36 +4,43 @@
       <img class="auth-visual-background" src="assets/site/atlasmap.png" alt="" />
       <div class="auth-visual-copy">
         <strong>AtlasMap</strong>
-        <p>Entre para acompanhar, criar e curtir projetos de energia e sustentabilidade.</p>
+        <p>Entre para acompanhar squads e projetos de energia e sustentabilidade.</p>
       </div>
     </div>
     <div class="auth-content">
       <a class="back-link" routerLink="/">← Voltar</a>
-      <p class="eyebrow">{{ mode() === 'login' ? 'Bem-vindo de volta' : 'Comece agora' }}</p>
-      <h1>{{ mode() === 'login' ? 'Entrar' : 'Criar conta' }}</h1>
-      @if (message()) { <p class="form-message">{{ message() }}</p> }
-
+      <p class="eyebrow">Bem-vindo de volta</p>
+      <h1>Entrar</h1>
       <form (ngSubmit)="submit()">
-        @if (mode() === 'register') {
-          <label>Nome completo<input name="name" [(ngModel)]="name" placeholder="Seu nome completo" autocomplete="name" required /></label>
-        }
-        <label>E-mail<input name="email" type="email" [(ngModel)]="email" placeholder="exemplo@atlasmap.com" autocomplete="email" required /></label>
-        @if (mode() === 'register') {
-          <label>Número de telefone<input name="phone" type="tel" [(ngModel)]="phone" placeholder="(15) 99999-9999" autocomplete="tel" required /></label>
-        }
-        <label>Senha<input name="password" type="password" [(ngModel)]="password" placeholder="Digite sua senha" autocomplete="current-password" required /></label>
-        <button class="primary-button full-button" type="submit">{{ mode() === 'login' ? 'Entrar' : 'Cadastrar' }}</button>
+        <label for="login-email">E-mail</label>
+        <input
+          id="login-email"
+          name="email"
+          type="email"
+          [(ngModel)]="email"
+          placeholder="exemplo@atlasmap.com"
+          autocomplete="email"
+          required
+        />
+        <label for="login-password">Senha</label>
+        <input
+          id="login-password"
+          name="password"
+          type="password"
+          [(ngModel)]="password"
+          placeholder="Digite sua senha"
+          autocomplete="current-password"
+          required
+        />
+        <button class="primary-button full-button" type="submit">Entrar</button>
       </form>
-
-      @if (mode() === 'login') {
-        <div class="social-buttons">
-          <button type="button" (click)="social('Google')"><span>G</span> Entrar com o Google</button>
-          <button type="button" (click)="social('GitHub')"><span>GH</span> Entrar com o GitHub</button>
-        </div>
-        <p class="auth-switch">Não tem uma conta? <button type="button" (click)="changeMode('register')">Cadastre-se</button></p>
-      } @else {
-        <p class="auth-switch">Já tem uma conta? <button type="button" (click)="changeMode('login')">Entrar</button></p>
-      }
+      <div class="social-buttons">
+        <button type="button" (click)="social('Google')"><span>G</span> Entrar com o Google</button>
+        <button type="button" (click)="social('GitHub')">
+          <span>GH</span> Entrar com o GitHub
+        </button>
+      </div>
+      <p class="auth-switch">Não tem uma conta? <a routerLink="/cadastro">Cadastre-se</a></p>
     </div>
   </section>
 </main>
